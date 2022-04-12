@@ -6,7 +6,8 @@ from shutil import copy2
 
 from lib import *
 from functions import *
-from plot import plot_hexes, plot_var_by_color
+from models import *
+from plot import plot_hexes, plot_var_by_color, animate_var_by_color
 
 ##################################################################################################
 # set up results folder
@@ -17,7 +18,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-save_dir = results_dir + 'dev/'
+# save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -37,11 +38,12 @@ hex_array = []
 for x in range(hex_x_N):
     for y in range(hex_y_N):
         hex_array.append(Hex(-x-y,y,x))
-        
-var_dict = {}
 
-for hexa in hex_array:
-    var_dict[hexa] = random.randint(4,95)
+timepoint_N = 960
+value_range = (0,100)
+
+var_dict = {}
+var_dict = random_pulsing(var_dict, hex_array, timepoint_N, value_range)
     
 ################################################################################################## 
 # PLOT
@@ -55,8 +57,10 @@ layout_dict = {
 pointy = create_layout_from_dict(layout_dict)
 
 # save figs
-plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-plot_var_by_color(var_dict, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# selected_t_idx = 0
+# plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+animate_var_by_color(var_dict, timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 
 ################################################################################################## 
 # PICKLE
