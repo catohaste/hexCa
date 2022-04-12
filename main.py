@@ -18,7 +18,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-save_dir = results_dir + 'dev/'
+# save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -39,8 +39,8 @@ for x in range(hex_x_N):
     for y in range(hex_y_N):
         hex_array.append(Hex(-x-y,y,x))
 
-timepoint_N = 1000
-value_range = (4,95)
+timepoint_N = 960
+value_range = (0,100)
 
 var_dict = {}
 var_dict = random_pulsing(var_dict, hex_array, timepoint_N, value_range)
@@ -60,7 +60,7 @@ pointy = create_layout_from_dict(layout_dict)
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # selected_t_idx = 0
 # plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-animate_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+animate_var_by_color(var_dict, timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 
 ################################################################################################## 
 # PICKLE

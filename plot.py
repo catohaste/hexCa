@@ -3,6 +3,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.patches import RegularPolygon
 from shapely.geometry import Polygon
+from matplotlib.animation import FuncAnimation
 
 from lib import *
 from functions import *
@@ -22,7 +23,7 @@ def set_axes_lims_from_hexes(ax, hexes, pointy_layout):
     ax.set_xlim([min_x - pointy_radius, max_x + pointy_radius])
     ax.set_ylim([min_y - pointy_radius, max_y + pointy_radius])
     
-def animate_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
+def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
@@ -30,26 +31,42 @@ def animate_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_la
     min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
     max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
     var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-    var_cmap = plt.get_cmap('Oranges')
-
-    hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
+    var_cmap = plt.get_cmap('Blues')
     
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
     ax = fig.add_subplot(111)
     
     pointy_radius = pointy_layout.size[0]
-    hex_patches = [RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val_array[timepoint_idx])), numVertices=6, radius=pointy_radius, alpha=0.2, edgecolor='k') for (val_array, center) in value_loc_tuples]
-    for patch in hex_patches:
-        ax.add_patch(patch)
+    hex_patches = {}
+    for hexa in hexes:
+        val = var_dict[hexa][0]
+        center = hex_to_pixel(pointy_layout, hexa)
+        hex_patches[hexa] = RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val)), numVertices=6, radius=pointy_radius, edgecolor='k')
+        ax.add_patch(hex_patches[hexa])
     
     set_axes_lims_from_hexes(ax, hexes, pointy_layout)
-
+    
     ax.set_aspect('equal')
     fig.patch.set_visible(False)
     ax.axis('off')
     plt.tight_layout()
-    plt.savefig(save_dir + 'hexes_random.png')
+    
+    video_length = 10 # seconds
+    fps = 12
+    frames_N = video_length * fps
+    sample_rate = int(np.floor(timepoint_N / frames_N))
+    print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    def animate(i):
+        for hexa in hexes:
+            val = var_dict[hexa][i*sample_rate]
+            hex_patches[hexa].set_facecolor(var_cmap(var_norm(val)))
+        return
+
+    anim = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+    # anim = FuncAnimation(fig, animate, init_func=init, frames=number_of_frames, blit=False)
+
+    anim.save(save_dir + 'hex_anim.mp4', writer='ffmpeg', fps=fps)
 
 def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
@@ -59,7 +76,7 @@ def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layou
     min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
     max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
     var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-    var_cmap = plt.get_cmap('Oranges')
+    var_cmap = plt.get_cmap('Purples')
 
     hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
     
@@ -68,7 +85,7 @@ def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layou
     ax = fig.add_subplot(111)
     
     pointy_radius = pointy_layout.size[0]
-    hex_patches = [RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val_array[timepoint_idx])), numVertices=6, radius=pointy_radius, alpha=0.2, edgecolor='k') for (val_array, center) in value_loc_tuples]
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val_array[timepoint_idx])), numVertices=6, radius=pointy_radius, edgecolor='k') for (val_array, center) in value_loc_tuples]
     for patch in hex_patches:
         ax.add_patch(patch)
     
@@ -90,12 +107,12 @@ def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
     ax = fig.add_subplot(111)
 
-    hex_patches = [RegularPolygon((center.x, center.y), facecolor='C0', numVertices=6, radius=pointy_radius, alpha=0.2, edgecolor='k') for center in hex_centers]
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k') for center in hex_centers]
     for patch in hex_patches:
         ax.add_patch(patch)
         
     set_axes_lims_from_hexes(ax, hexes, pointy_layout)
-
+    
     ax.set_aspect('equal')
     fig.patch.set_visible(False)
     ax.axis('off')
