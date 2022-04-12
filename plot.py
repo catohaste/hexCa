@@ -21,25 +21,54 @@ def set_axes_lims_from_hexes(ax, hexes, pointy_layout):
     max_y = np.max(hex_y_list)
     ax.set_xlim([min_x - pointy_radius, max_x + pointy_radius])
     ax.set_ylim([min_y - pointy_radius, max_y + pointy_radius])
-
-def plot_var_by_color(var_dict, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
+    
+def animate_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
     # get colormap
-    min_val = min([val for (val, center) in value_loc_tuples])
-    max_val = max([val for (val, center) in value_loc_tuples])
+    min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
+    max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
     var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
     var_cmap = plt.get_cmap('Oranges')
 
     hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
-
+    
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
     ax = fig.add_subplot(111)
     
     pointy_radius = pointy_layout.size[0]
-    hex_patches = [RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val)), numVertices=6, radius=pointy_radius, alpha=0.2, edgecolor='k') for (val, center) in value_loc_tuples]
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val_array[timepoint_idx])), numVertices=6, radius=pointy_radius, alpha=0.2, edgecolor='k') for (val_array, center) in value_loc_tuples]
+    for patch in hex_patches:
+        ax.add_patch(patch)
+    
+    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+
+    ax.set_aspect('equal')
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    plt.tight_layout()
+    plt.savefig(save_dir + 'hexes_random.png')
+
+def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
+    
+    value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+    
+    # get colormap
+    min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
+    max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
+    var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+    var_cmap = plt.get_cmap('Oranges')
+
+    hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
+    
+    grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    ax = fig.add_subplot(111)
+    
+    pointy_radius = pointy_layout.size[0]
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val_array[timepoint_idx])), numVertices=6, radius=pointy_radius, alpha=0.2, edgecolor='k') for (val_array, center) in value_loc_tuples]
     for patch in hex_patches:
         ax.add_patch(patch)
     
