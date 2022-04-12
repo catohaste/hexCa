@@ -1,7 +1,34 @@
+from os import mkdir, path
 import random
+import pickle
+import datetime
+from shutil import copy2
 
 from lib import *
+from functions import *
 from plot import plot_hexes, plot_var_by_color
+
+##################################################################################################
+# set up results folder
+results_dir = "results/"
+if not path.isdir(results_dir):
+    mkdir(results_dir)
+
+now = datetime.datetime.now()
+now_str = now.strftime("%Y-%m-%d_%H%M/")
+save_dir = results_dir + now_str
+save_dir = results_dir + 'dev/'
+if not path.isdir(save_dir):
+    mkdir(save_dir)
+    
+# save code
+code_dir = save_dir + "code/"
+if not path.isdir(code_dir):
+    mkdir(code_dir)
+filenames = ['main.py', 'functions.py', 'plot.py']
+for filename in filenames:
+    copy2(filename, code_dir + filename)
+################################################################################################## 
 
 # set up hexagonal grid with (q,r,s) coordinates
 hex_x_N = 40
@@ -15,10 +42,29 @@ var_dict = {}
 
 for hexa in hex_array:
     var_dict[hexa] = random.randint(4,95)
-        
-#plot_hexes(hex_array, hex_grid_dim, pointy_radius, figsize_x)
-plot_var_by_color(var_dict, hex_array, (hex_x_N,hex_y_N), 10.0, 12)
+    
+################################################################################################## 
+# PLOT
+# set up layout for plots
+layout_dict = {
+    "layout_str": 'pointy',
+    "center_x": 0,
+    "center_y": 0,
+    "radius": 10.0
+}
+pointy = create_layout_from_dict(layout_dict)
 
+# save figs
+plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+plot_var_by_color(var_dict, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 
-
-
+################################################################################################## 
+# PICKLE
+pickle_dir = save_dir + "pickles/"
+if not path.isdir(pickle_dir):
+    mkdir(pickle_dir)
+value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hex_array, pointy)
+with open(pickle_dir + 'value_loc_tuples.pickle', 'wb') as handle:
+    pickle.dump(value_loc_tuples, handle)
+with open(pickle_dir + 'layout_dict.pickle', 'wb') as handle:
+    pickle.dump(layout_dict, handle)
