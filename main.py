@@ -45,16 +45,12 @@ pointy = create_layout_from_dict(layout_dict)
 hex_x_N = 40
 hex_y_N = 6
 hex_array = []
-# PARALLELOGRAM MAP (0,0,0) at centre
+# PARALLELOGRAM MAP
 # for x in range(hex_x_N):
 #     for y in range(hex_y_N):
 #         hex_array.append(Hex(-x-y,y,x))
     
-# RECTANGLE MAP (0,0,0) at centre
-# left=-int(hex_x_N/2)
-# right=int(hex_x_N/2)
-# top=-int(hex_y_N/2)
-# bottom=int(hex_y_N/2)
+# RECTANGLE MAP
 for y in range(hex_y_N):
     y_offset = int(np.floor(y/2))
     for x in range(-y_offset, hex_x_N - y_offset):
@@ -67,14 +63,16 @@ value_range = (0,100)
 
 var_dict = allocate_var_dict(hex_array, timepoint_N, 0)
 var_dict = initialize_leftmost_hexes_to_value(var_dict, hex_array, 100, pointy)
+
+var_dict = diffusion(var_dict, hex_array, timepoint_N)
     
 ################################################################################################## 
 # PLOT
 
 # save figs
-plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-selected_t_idx = 0
-plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# selected_t_idx = 0
+# plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 animate_var_by_color(var_dict, timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 
 ################################################################################################## 

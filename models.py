@@ -2,6 +2,30 @@ import numpy as np
 import random
 
 from lib import *
+from functions import *
+
+def diffusion(var_dict, hex_array, timepoint_N):
+    """
+    
+    """
+    
+    diff_const = 0.01
+    for t_idx in range(1, timepoint_N):
+        for hexa in hex_array:
+            neighborhood_sum = 0
+            neighbor_counter = 0
+            for direction in range(6):
+                neighbor = hex_neighbor(hexa, direction)
+                try:
+                    neighborhood_sum += var_dict[neighbor][t_idx - 1]
+                    neighbor_counter += 1 
+                except KeyError:
+                    continue
+            neighborhood_avg = neighborhood_sum/neighbor_counter
+            var_dict[hexa][t_idx] = var_dict[hexa][t_idx-1] + diff_const * (neighborhood_avg - var_dict[hexa][t_idx - 1])
+            
+    return var_dict
+
 
 def random_pulsing(var_dict, hex_array, timepoint_N, value_range):
     """
