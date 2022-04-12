@@ -31,7 +31,7 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
     max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
     var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-    var_cmap = plt.get_cmap('Blues')
+    var_cmap = plt.get_cmap('Greens')
     
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
