@@ -6,7 +6,8 @@ from functions import *
 
 def diffusion(var_dict, hex_array, timepoint_N):
     """
-    
+    zero-flux boundary conditions
+    the try function is a weird fix, but it works
     """
     
     diff_const = 0.01

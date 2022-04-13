@@ -49,7 +49,7 @@ hex_array = []
 # for x in range(hex_x_N):
 #     for y in range(hex_y_N):
 #         hex_array.append(Hex(-x-y,y,x))
-    
+
 # RECTANGLE MAP
 for y in range(hex_y_N):
     y_offset = int(np.floor(y/2))
