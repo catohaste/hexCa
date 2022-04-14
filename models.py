@@ -19,7 +19,7 @@ def diffusion(var_dict, hex_array, timepoint_N):
                 neighbor = hex_neighbor(hexa, direction)
                 try:
                     neighborhood_sum += var_dict[neighbor][t_idx - 1]
-                    neighbor_counter += 1 
+                    neighbor_counter += 1
                 except KeyError:
                     continue
             neighborhood_avg = neighborhood_sum/neighbor_counter

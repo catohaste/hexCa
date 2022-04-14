@@ -62,7 +62,11 @@ timepoint_N = 960
 value_range = (0,100)
 
 var_dict = allocate_var_dict(hex_array, timepoint_N, 0)
-var_dict = initialize_leftmost_hexes_to_value(var_dict, hex_array, 100, pointy)
+var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0, 4, pointy)
+var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 1, 4, pointy)
+var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0.25, 2.5, pointy)
+var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0.5, 3, pointy)
+var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0.75, 2.5, pointy)
 
 var_dict = diffusion(var_dict, hex_array, timepoint_N)
     

@@ -24,7 +24,12 @@ def allocate_var_dict(hex_array, timepoint_N, value):
             
     return var_dict
     
-def initialize_leftmost_hexes_to_value(var_dict, hex_array, value, pointy_layout):
+def initialize_column_of_hexes_to_value(var_dict, hex_array, value, x_coord_frac, half_n_cols, pointy_layout):
+    """
+    Initialize (t=0 only) n_cols of hexs to given value.
+    Give the x_coord of hexs to initialize as fraction of whole (i.e. between 0,1)
+    Strictly speaking, layout shouldn't be require. But makes implementation here somewhat easier.
+    """
     
     radius = pointy_layout.size[0]
     
@@ -33,23 +38,13 @@ def initialize_leftmost_hexes_to_value(var_dict, hex_array, value, pointy_layout
         centers[hexa] = hex_to_pixel(pointy_layout, hexa)
         
     x_coords = [centers[hexa][0] for hexa in centers]
-    rows = 3
-    rows_edge = 4
-    x_min_lim = min(x_coords) + radius*rows_edge
-    x_max_lim = max(x_coords) - radius*rows_edge
-    frac = 0.5
-    x_middle = min(x_coords) + frac * (max(x_coords) - min(x_coords)) 
-    x_middle_up = x_middle + radius*rows
-    x_middle_down = x_middle - radius*rows
+
+    x_middle = min(x_coords) + x_coord_frac * (max(x_coords) - min(x_coords)) 
+    x_middle_up = x_middle + radius*half_n_cols
+    x_middle_down = x_middle - radius*half_n_cols
     
-    middle_hexes = [hexa for hexa in centers if centers[hexa][0] > x_middle_down and centers[hexa][0] < x_middle_up]    
-    right_hexes = [hexa for hexa in centers if centers[hexa][0] > x_max_lim]
-    left_hexes = [hexa for hexa in centers if centers[hexa][0] < x_min_lim]
+    middle_hexes = [hexa for hexa in centers if centers[hexa][0] > x_middle_down and centers[hexa][0] < x_middle_up]
     for hexa in middle_hexes:
-        var_dict[hexa][0] = value
-    for hexa in left_hexes:
-        var_dict[hexa][0] = value
-    for hexa in right_hexes:
         var_dict[hexa][0] = value
     
     return var_dict
