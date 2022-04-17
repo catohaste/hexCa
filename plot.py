@@ -54,19 +54,43 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     
     video_length = 10 # seconds
     fps = 12
+    interval_from_fps = 1000/fps
     frames_N = video_length * fps
     sample_rate = int(np.floor(timepoint_N / frames_N))
-    print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
     def animate(i):
         for hexa in hexes:
             val = var_dict[hexa][i*sample_rate]
             hex_patches[hexa].set_facecolor(var_cmap(var_norm(val)))
         return
-
-    anim = FuncAnimation(fig, animate, frames=frames_N, blit=False)
     # anim = FuncAnimation(fig, animate, init_func=init, frames=number_of_frames, blit=False)
+    
 
-    anim.save(save_dir + 'hex_anim.mp4', writer='ffmpeg', fps=fps)
+    if save_dir == 'show':
+        print("animation not currently working")
+        # OPTION 1
+        from matplotlib import rc
+        from IPython.display import HTML
+        anim_jupyter = FuncAnimation(fig, animate, frames=frames_N, interval=interval_from_fps, blit=False)
+        rc('animation', html='html5')
+        HTML(anim_jupyter.to_html5_video())
+        
+        # OPTION 2
+        # anim_jupyter = FuncAnimation(fig, animate, frames=frames_N, interval=interval_from_fps, blit=False)
+        # plt.show()
+        
+        # OPTION 3
+        # from IPython.display import HTML
+        # anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        # anim_mp4.save('hex_anim.mp4', writer='ffmpeg', fps=fps)
+        # HTML("""
+        #     <video alt="test" controls>
+        #         <source src="hex_anim.mp4" type="video/mp4">
+        #     </video>
+        # """)
+    else:
+        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        anim_mp4.save(save_dir + 'hex_anim.mp4', writer='ffmpeg', fps=fps)
 
 def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
@@ -95,7 +119,11 @@ def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layou
     fig.patch.set_visible(False)
     ax.axis('off')
     plt.tight_layout()
-    plt.savefig(save_dir + 'hexes_random.png')
+    
+    if save_dir == 's    how':
+        plt.show()
+    else:
+        plt.savefig(save_dir + 'hexes_random.png')
     
 def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
@@ -117,5 +145,9 @@ def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     fig.patch.set_visible(False)
     ax.axis('off')
     plt.tight_layout()
-    plt.savefig(save_dir + 'hexes_const.png')
+    
+    if save_dir == 'show':
+        plt.show()
+    else:
+        plt.savefig(save_dir + 'hexes_const.png')
 
