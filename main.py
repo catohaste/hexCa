@@ -3,7 +3,9 @@ import random
 import pickle
 import datetime
 from shutil import copy2
-import timeit
+import time
+
+import matplotlib.pyplot as plt
 
 from lib import *
 from functions import *
@@ -45,8 +47,8 @@ pointy = create_layout_from_dict(layout_dict)
 
 ##################################################################################################
 # set up hexagonal grid with (q,r,s) coordinates
-hex_x_N = 40
-hex_y_N = 6
+hex_x_N = 10
+hex_y_N = 3
 hex_array = []
 # PARALLELOGRAM MAP
 # for x in range(hex_x_N):
@@ -61,45 +63,59 @@ for y in range(hex_y_N):
         
 ##################################################################################################
 
+t_endpoint = 100
+
 dt = 0.001
-run_timepoint_N = 100 * int(1/dt)
-value_range = (0,100)
+store_dt = 0.5
+time_scaling = store_dt / dt
 
+run_t = np.arange(0,t_endpoint,dt)
+store_t = np.arange(0,t_endpoint,store_dt)
+
+run_timepoint_N = len(run_t)
+store_timepoint_N = len(store_t)
+
+# initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 3, pointy)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0.5, 3, pointy)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 1, 3, pointy)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0.5, 1, pointy)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 1, 1, pointy)
 
+# temporarily turn off cell-cell communication
 params["D_IP3"] = 0
 
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
-Ca_cyt = allocate_var_dict(hex_array, run_timepoint_N, Ca_cyt_0)
-ip3 = allocate_var_dict(hex_array, run_timepoint_N, 0.2)
-Ca_stored = allocate_var_dict(hex_array, run_timepoint_N, params["c_tot"] - Ca_cyt_0)
-ip3R_act = allocate_var_dict(hex_array, run_timepoint_N, 0.6)
+Ca_cyt = allocate_var_dict(hex_array, store_timepoint_N, Ca_cyt_0)
+ip3 = allocate_var_dict(hex_array, store_timepoint_N, 0.2)
+Ca_stored = allocate_var_dict(hex_array, store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+ip3R_act = allocate_var_dict(hex_array, store_timepoint_N, 0.6)
 
 start = time.time()
 
 variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
-Ca_cyt, ip3, Ca_stored, ip3R_act, = politi(variables, dt, run_timepoint_N, hex_array, params)
+Ca_cyt, ip3, Ca_stored, ip3R_act, = politi(variables, run_t, store_t, hex_array, params)
 
 end = time.time()
 
-var_strings = ['Ca_cyt', 'ip3', 'Ca_stored', 'ip3R_act']
-color_strings = ['Blues', 'Reds', 'Greens', 'Purples']
-
-print(end - start)
+print('Time solving', end - start)
     
 ################################################################################################## 
 # PLOT
+
+plot_vars = [Ca_cyt, ip3]
+var_strings = ['Ca_cyt', 'ip3']
+color_strings = ['Blues', 'Reds']
 
 # save figs
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # selected_t_idx = 0
 # plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 for var, var_str, color_str in zip(variables, var_strings, color_strings):
-    animate_var_by_color(var, run_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 3, color_str, save_dir + var_str)
+
+anim_time = time.time()
+print('Time animating', anim_time - end)
 
 ################################################################################################## 
 # PICKLE
@@ -115,3 +131,6 @@ with open(pickle_dir + 'layout_dict.pickle', 'wb') as handle:
 hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]   
 with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
     pickle.dump(hex_tuples, handle)
+    
+total = time.time()
+print('Total time', total - start)

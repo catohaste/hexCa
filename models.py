@@ -4,7 +4,7 @@ import random
 from lib import *
 from functions import *
 
-def politi(variables, dt, run_timepoint_N, hex_array, params):
+def politi(variables, run_t, store_t, hex_array, params):
     """
     variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
     """
@@ -36,32 +36,47 @@ def politi(variables, dt, run_timepoint_N, hex_array, params):
     
     Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
     
+    old_Ca_cyt = allocate_var_dict(hex_array, 1, 0)
+    old_ip3 = allocate_var_dict(hex_array, 1, 0)
+    old_Ca_stored = allocate_var_dict(hex_array, 1, 0)
+    old_ip3R_act = allocate_var_dict(hex_array, 1, 0)
+    
+    for hexa in hex_array: 
+        old_Ca_cyt[hexa] = Ca_cyt[hexa][0]
+        old_ip3[hexa] = ip3[hexa][0]
+        old_Ca_stored[hexa] = Ca_stored[hexa][0]
+        old_ip3R_act[hexa] = ip3R_act[hexa][0]
+        
+    new_Ca_cyt = allocate_var_dict(hex_array, 1, 0)
+    new_ip3 = allocate_var_dict(hex_array, 1, 0)
+    new_Ca_stored = allocate_var_dict(hex_array, 1, 0)
+    new_ip3R_act = allocate_var_dict(hex_array, 1, 0)
+    
     ##################################################################
     
     tau_p = 1 / (k_3K + k_5P)
     eta = k_3K * tau_p
     
-    # new_Ca_cyt = allocate_var_dict(hex_array, 1, 0)
-    # new_ip3 = allocate_var_dict(hex_array, 1, 0)
-    # new_Ca_stored = allocate_var_dict(hex_array, 1, 0)
-    # new_ip3R_act = allocate_var_dict(hex_array, 1, 0)
+    Ca_temp = allocate_var_dict(hex_array, 1, 0)
+    V_PLC_scaled = allocate_var_dict(hex_array, 1, 0)
     
-    for t_idx in range(1, run_timepoint_N):
-        
-        Ca_temp = allocate_var_dict(hex_array, 1, 0)
-        V_PLC_scaled = allocate_var_dict(hex_array, 1, 0)
+    dt = run_t[1] - run_t[0]
+    store_dt = store_t[1] - store_t[0]
+    time_scaling = int(store_dt / dt)
+    
+    for t_idx, t in enumerate(run_t[1:]):
     
         for hexa in hex_array:
         
             V_PLC_scaled[hexa] = V_PLC[hexa] * tau_p
         
-            Ca_temp[hexa] = (k_1 * ((Hill(ip3R_act[hexa][t_idx-1], K_a, Ca_cyt[hexa][t_idx-1], 1 ) * Hill(1, K_p , ip3[hexa][t_idx-1], 1))**3) + k_2) * (Ca_stored[hexa][t_idx-1] - Ca_cyt[hexa][t_idx-1]) - Hill(V_SERCA, K_SERCA, Ca_cyt[hexa][t_idx-1], 2)
+            Ca_temp[hexa] = (k_1 * ((Hill(old_ip3R_act[hexa], K_a, old_Ca_cyt[hexa], 1 ) * Hill(1, K_p , old_ip3[hexa], 1))**3) + k_2) * (old_Ca_stored[hexa] - old_Ca_cyt[hexa]) - Hill(V_SERCA, K_SERCA, old_Ca_cyt[hexa], 2)
         
-            ip3R_act[hexa][t_idx] = ip3R_act[hexa][t_idx-1] + dt * ( (1 / tau_r) * (1 - ip3R_act[hexa][t_idx-1] * ((K_i + Ca_cyt[hexa][t_idx-1]) / K_i) ) )
+            new_ip3R_act[hexa] = old_ip3R_act[hexa] + dt * ( (1 / tau_r) * (1 - old_ip3R_act[hexa] * ((K_i + old_Ca_cyt[hexa]) / K_i) ) )
         
-            Ca_stored[hexa][t_idx] = Ca_stored[hexa][t_idx-1] + dt * (((-1) * Ca_temp[hexa]) * (1 / beta) )
+            new_Ca_stored[hexa] = old_Ca_stored[hexa] + dt * (((-1) * Ca_temp[hexa]) * (1 / beta) )
         
-            Ca_cyt[hexa][t_idx] = Ca_cyt[hexa][t_idx-2] + dt * ( Ca_temp[hexa] + epsilon * (v_0 + phi * V_PLC_scaled[hexa] - Hill(V_pm, K_pm, Ca_cyt[hexa][t_idx-1], 2)) )
+            new_Ca_cyt[hexa] = old_Ca_cyt[hexa] + dt * ( Ca_temp[hexa] + epsilon * (v_0 + phi * V_PLC_scaled[hexa] - Hill(V_pm, K_pm, old_Ca_cyt[hexa], 2)) )
         
             # only IP3 travels between cells
             # this calculates an ip3 neighborhood average with no-flux boundary conditions
@@ -70,13 +85,27 @@ def politi(variables, dt, run_timepoint_N, hex_array, params):
             for direction in range(6):
                 neighbor = hex_neighbor(hexa, direction)
                 try:
-                    ip3_neighborhood_sum += ip3[neighbor][t_idx-1]
+                    ip3_neighborhood_sum += old_ip3[neighbor]
                     ip3_neighbor_counter += 1
                 except KeyError:
                     continue
             ip3_neighborhood_avg = ip3_neighborhood_sum/ip3_neighbor_counter
         
-            ip3[hexa][t_idx] = ip3[hexa][t_idx-1] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, Ca_cyt[hexa][t_idx-1], 2) - ( ip3[hexa][t_idx-1] * ( Hill(eta, K_3K, Ca_cyt[hexa][t_idx-1], 2) + 1 - eta) ) ) + D_IP3 * (ip3_neighborhood_avg - ip3[hexa][t_idx-1])
+            new_ip3[hexa] = old_ip3[hexa] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, old_Ca_cyt[hexa], 2) - ( old_ip3[hexa] * ( Hill(eta, K_3K, old_Ca_cyt[hexa], 2) + 1 - eta) ) ) + D_IP3 * (ip3_neighborhood_avg - old_ip3[hexa]) )
+            
+            old_Ca_cyt[hexa] = new_Ca_cyt[hexa]
+            old_ip3[hexa] = new_ip3[hexa]
+            old_Ca_stored[hexa] = new_Ca_stored[hexa]
+            old_ip3R_act[hexa] = new_ip3R_act[hexa]
+            
+            if t in store_t:
+                store_t_idx = int((t_idx+1) / time_scaling)
+                
+                Ca_cyt[hexa][store_t_idx] = new_Ca_cyt[hexa]
+                ip3[hexa][store_t_idx] = new_ip3[hexa]
+                Ca_stored[hexa][store_t_idx] = new_Ca_stored[hexa]
+                ip3R_act[hexa][store_t_idx] = new_ip3R_act[hexa]
+                
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
 
