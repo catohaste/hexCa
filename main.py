@@ -80,7 +80,7 @@ params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
 params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
 
 # temporarily turn off cell-cell communication
-params["D_IP3"] = 0
+params["D_IP3"] = 0.01
 
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
@@ -105,8 +105,8 @@ plot_vars = [Ca_cyt, ip3]
 var_strings = ['Ca_cyt', 'ip3']
 color_strings = ['Blues', 'Reds']
 
-plt.plot(store_t, ip3[hex_array[0]])
-plt.show()
+# plt.plot(store_t, ip3[hex_array[0]])
+# plt.show()
 
 # save figs
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)

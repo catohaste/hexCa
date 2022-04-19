@@ -53,7 +53,7 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     plt.tight_layout()
     
     video_length = 10 # seconds
-    fps = 12
+    fps = 24
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
     sample_rate = int(np.floor(timepoint_N / frames_N))

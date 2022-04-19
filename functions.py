@@ -93,6 +93,16 @@ def create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout):
         
     return value_loc_tuples
     
+def unpack_val_loc_tuple_std_layout(value_loc_tuples, pointy):
+    hex_array = []
+    var_dict = {}
+    for val,loc in value_loc_tuples:
+        hexa = pixel_to_hex(pointy, loc)
+        hex_array.append(hexa)
+        var_dict[hexa] = val
+        
+    return hex_array, var_dict,
+    
 def hex_to_tuple(hex):
     return (hex.q,hex.r,hex.s)
     
