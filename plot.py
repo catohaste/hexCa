@@ -23,7 +23,7 @@ def set_axes_lims_from_hexes(ax, hexes, pointy_layout):
     ax.set_xlim([min_x - pointy_radius, max_x + pointy_radius])
     ax.set_ylim([min_y - pointy_radius, max_y + pointy_radius])
     
-def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
+def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str):
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
@@ -31,7 +31,7 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
     max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
     var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-    var_cmap = plt.get_cmap('Greens')
+    var_cmap = plt.get_cmap(color_str)
     
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
@@ -66,7 +66,7 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     # anim = FuncAnimation(fig, animate, init_func=init, frames=number_of_frames, blit=False)
     
 
-    if save_dir == 'show':
+    if file_str == 'show':
         print("animation not currently working")
         # OPTION 1
         from matplotlib import rc
@@ -90,7 +90,7 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
         # """)
     else:
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
-        anim_mp4.save(save_dir + 'hex_anim.mp4', writer='ffmpeg', fps=fps)
+        anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
 
 def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
