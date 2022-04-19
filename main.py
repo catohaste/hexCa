@@ -3,11 +3,14 @@ import random
 import pickle
 import datetime
 from shutil import copy2
+import timeit
 
 from lib import *
 from functions import *
 from models import *
 from plot import plot_hexes, plot_var_by_color, animate_var_by_color
+
+from params import params
 
 ##################################################################################################
 # set up results folder
@@ -58,17 +61,35 @@ for y in range(hex_y_N):
         
 ##################################################################################################
 
-timepoint_N = 960
+dt = 0.001
+run_timepoint_N = 100 * int(1/dt)
 value_range = (0,100)
 
-var_dict = allocate_var_dict(hex_array, timepoint_N, 0)
-var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0, 4, pointy)
-var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 1, 4, pointy)
-var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0.25, 2.5, pointy)
-var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0.5, 3, pointy)
-var_dict = initialize_column_of_hexes_to_value(var_dict, hex_array, 100, 0.75, 2.5, pointy)
+params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 3, pointy)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0.5, 3, pointy)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 1, 3, pointy)
 
-var_dict = diffusion(var_dict, hex_array, timepoint_N)
+params["D_IP3"] = 0
+
+# allocation initial conditions for variables
+Ca_cyt_0 = 2
+Ca_cyt = allocate_var_dict(hex_array, run_timepoint_N, Ca_cyt_0)
+ip3 = allocate_var_dict(hex_array, run_timepoint_N, 0.2)
+Ca_stored = allocate_var_dict(hex_array, run_timepoint_N, params["c_tot"] - Ca_cyt_0)
+ip3R_act = allocate_var_dict(hex_array, run_timepoint_N, 0.6)
+
+start = time.time()
+
+variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+Ca_cyt, ip3, Ca_stored, ip3R_act, = politi(variables, dt, run_timepoint_N, hex_array, params)
+
+end = time.time()
+
+var_strings = ['Ca_cyt', 'ip3', 'Ca_stored', 'ip3R_act']
+color_strings = ['Blues', 'Reds', 'Greens', 'Purples']
+
+print(end - start)
     
 ################################################################################################## 
 # PLOT
@@ -77,16 +98,18 @@ var_dict = diffusion(var_dict, hex_array, timepoint_N)
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # selected_t_idx = 0
 # plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-# animate_var_by_color(var_dict, timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+for var, var_str, color_str in zip(variables, var_strings, color_strings):
+    animate_var_by_color(var, run_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 ################################################################################################## 
 # PICKLE
 pickle_dir = save_dir + "pickles/"
 if not path.isdir(pickle_dir):
     mkdir(pickle_dir)
-value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hex_array, pointy)
-with open(pickle_dir + 'value_loc_tuples.pickle', 'wb') as handle:
-    pickle.dump(value_loc_tuples, handle)
+for var, var_str in zip(variables, var_strings):
+    value_loc_tuple = create_val_loc_tuple_std_layout(var, hex_array, pointy)
+    with open(pickle_dir + var_str + '.pickle', 'wb') as handle:
+        pickle.dump(value_loc_tuple, handle)
 with open(pickle_dir + 'layout_dict.pickle', 'wb') as handle:
     pickle.dump(layout_dict, handle)
 hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]   
