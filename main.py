@@ -77,7 +77,7 @@ var_dict = diffusion(var_dict, hex_array, timepoint_N)
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # selected_t_idx = 0
 # plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-animate_var_by_color(var_dict, timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# animate_var_by_color(var_dict, timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 
 ################################################################################################## 
 # PICKLE
@@ -89,3 +89,6 @@ with open(pickle_dir + 'value_loc_tuples.pickle', 'wb') as handle:
     pickle.dump(value_loc_tuples, handle)
 with open(pickle_dir + 'layout_dict.pickle', 'wb') as handle:
     pickle.dump(layout_dict, handle)
+hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]   
+with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
+    pickle.dump(hex_tuples, handle)

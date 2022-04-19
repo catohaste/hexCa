@@ -57,5 +57,10 @@ def create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout):
         
     return value_loc_tuples
     
+def hex_to_tuple(hex):
+    return (hex.q,hex.r,hex.s)
+    
+def tuple_to_hex(hex_tuple):
+    return Hex(hex_tuple[0], hex_tuple[1], hex_tuple[2])
 
     
