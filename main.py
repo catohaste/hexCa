@@ -23,7 +23,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-save_dir = results_dir + 'dev/'
+# save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -31,7 +31,7 @@ if not path.isdir(save_dir):
 code_dir = save_dir + "code/"
 if not path.isdir(code_dir):
     mkdir(code_dir)
-filenames = ['main.py', 'functions.py', 'plot.py']
+filenames = ['main.py', 'functions.py', 'plot.py', 'models.py', 'params.py']
 for filename in filenames:
     copy2(filename, code_dir + filename)
 
@@ -47,8 +47,8 @@ pointy = create_layout_from_dict(layout_dict)
 
 ##################################################################################################
 # set up hexagonal grid with (q,r,s) coordinates
-hex_x_N = 10
-hex_y_N = 3
+hex_x_N = 40
+hex_y_N = 6
 hex_array = []
 # PARALLELOGRAM MAP
 # for x in range(hex_x_N):
@@ -63,9 +63,9 @@ for y in range(hex_y_N):
         
 ##################################################################################################
 
-t_endpoint = 100
+t_endpoint = 1200
 
-dt = 0.001
+dt = 0.05
 store_dt = 0.5
 time_scaling = store_dt / dt
 
@@ -77,9 +77,7 @@ store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0.5, 1, pointy)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 1, 1, pointy)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
 
 # temporarily turn off cell-cell communication
 params["D_IP3"] = 0
@@ -107,12 +105,15 @@ plot_vars = [Ca_cyt, ip3]
 var_strings = ['Ca_cyt', 'ip3']
 color_strings = ['Blues', 'Reds']
 
+plt.plot(store_t, ip3[hex_array[0]])
+plt.show()
+
 # save figs
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # selected_t_idx = 0
 # plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 for var, var_str, color_str in zip(variables, var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 3, color_str, save_dir + var_str)
+    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 anim_time = time.time()
 print('Time animating', anim_time - end)
