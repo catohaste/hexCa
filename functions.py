@@ -11,9 +11,9 @@ def tau_p(k_3K, k_5P):
 
 def create_layout_from_dict(layout_dict):
     
-    if layout_dict["layout_str"] is "pointy":
+    if layout_dict["layout_str"] == "pointy":
         orientation = layout_pointy
-    elif layout_dict["layout_str"] is "flat":
+    elif layout_dict["layout_str"] == "flat":
         orientation = layout_flat
     else:
         print("layout_dict['layout_str'] should be 'pointy' or 'flat'.\nRevert to 'pointy' as default." )

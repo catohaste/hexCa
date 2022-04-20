@@ -28,8 +28,6 @@ with open(pickle_dir + 'layout_dict.pickle', 'rb') as handle:
     layout_dict = pickle.load(handle)
 pointy = create_layout_from_dict(layout_dict)
 
-print(layout_dict)
-
 # loading hex_tuples not working, weirdly don't need it
 # with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
 #     hex_tuples = pickle.load(handle)
@@ -48,20 +46,14 @@ hex_x_N,hex_y_N = 40, 6
 ##################################################################################################
 # PLOT
 
-# plt.figure(figsize=(6, 6))
-# idxs = list(range(40*6 - 1))
-# a = random.sample(idxs,1)[0]
-# b = random.sample(idxs,1)[0]
-# c = random.sample(idxs,1)[0]
-# print(a,b,c)
-#
-# plt.subplot(311)
-# plt.plot(ip3[hex_array[a]])
-# plt.subplot(312)
-# plt.plot(ip3[hex_array[39]])
-# plt.subplot(313)
-# plt.plot(ip3[hex_array[c]])
-# plt.show()
+plt.figure(figsize=(6, 6))
+plt.subplot(211)
+plt.plot(ip3[hex_array[0]])
+plt.subplot(212)
+plt.plot(ip3[hex_array[39]])
 
-# for var, var_str, color_str in zip(variables, var_strings, color_strings):
-#     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+plt.show()
+
+for var, var_str, color_str in zip(variables, var_strings, color_strings):
+    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+    
