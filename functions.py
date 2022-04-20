@@ -60,6 +60,7 @@ def initialize_column_of_hexes_to_value(var_dict, hex_array, value, x_coord_frac
     
     return var_dict
     
+## FIX ME, there don't need to be 2 of these functions
 def initialize_column_of_hexes_to_value_2(var_dict, hex_array, value, x_coord_frac, half_n_cols, pointy_layout):
     """
     Initialize (t=0 only) n_cols of hexs to given value.
@@ -85,6 +86,30 @@ def initialize_column_of_hexes_to_value_2(var_dict, hex_array, value, x_coord_fr
     
     return var_dict
 
+def initialize_var_dict_to_x_gradient(var_dict, hex_array, value_range, pointy_layout):
+    
+    radius = pointy_layout.size[0]
+    
+    centers = {}
+    for hexa in hex_array:
+        centers[hexa] = hex_to_pixel(pointy_layout, hexa)
+        
+    x_coords = [centers[hexa][0] for hexa in centers]
+    
+    x_cols = list(set(x_coords))
+    x_cols.sort()
+    x_cols_N = len(x_cols)
+    
+    x_vals = np.linspace(value_range[0], value_range[1], x_cols_N)
+    x_col_val_zipped = zip(x_cols, x_vals)
+    
+    for hexa in hex_array:
+        current_x = centers[hexa][0]
+        x_idx = x_cols.index(current_x)
+        var_dict[hexa][0] = x_vals[x_idx]
+    
+    return var_dict
+    
 def create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout):
     
     value_loc_tuples = []

@@ -23,7 +23,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-# save_dir = results_dir + 'dev/'
+save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -63,7 +63,7 @@ for y in range(hex_y_N):
         
 ##################################################################################################
 
-t_endpoint = 1200
+t_endpoint = 300
 
 dt = 0.05
 store_dt = 0.5
@@ -77,15 +77,18 @@ store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
+# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
 
 # temporarily turn off cell-cell communication
-params["D_IP3"] = 0.02
+params["D_IP3"] = 0
 
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
 Ca_cyt = allocate_var_dict(hex_array, store_timepoint_N, Ca_cyt_0)
+
 ip3 = allocate_var_dict(hex_array, store_timepoint_N, 0.2)
+# ip3 = initialize_var_dict_to_x_gradient(ip3, hex_array, (0,1.2), pointy)
+
 Ca_stored = allocate_var_dict(hex_array, store_timepoint_N, params["c_tot"] - Ca_cyt_0)
 ip3R_act = allocate_var_dict(hex_array, store_timepoint_N, 0.6)
 
@@ -93,32 +96,38 @@ start = time.time()
 
 variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 Ca_cyt, ip3, Ca_stored, ip3R_act, = politi(variables, run_t, store_t, hex_array, params)
+variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
 end = time.time()
 
 print('Time solving', end - start)
-    
-################################################################################################## 
+
+##################################################################################################
 # PLOT
 
 plot_vars = [Ca_cyt, ip3]
 var_strings = ['Ca_cyt', 'ip3']
 color_strings = ['Blues', 'Reds']
 
-# plt.plot(store_t, ip3[hex_array[0]])
-# plt.show()
+fig = plt.figure()
+ax = fig.add_subplot()
+
+ax.plot( store_t, ip3[hex_array[0]])
+ax.plot( store_t, Ca_cyt[hex_array[0]])
+
+plt.show()
 
 # save figs
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # selected_t_idx = 0
-# plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# plot_var_by_color(ip3, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 for var, var_str, color_str in zip(variables, var_strings, color_strings):
     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 anim_time = time.time()
 print('Time animating', anim_time - end)
 
-################################################################################################## 
+##################################################################################################
 # PICKLE
 pickle_dir = save_dir + "pickles/"
 if not path.isdir(pickle_dir):
@@ -129,9 +138,9 @@ for var, var_str in zip(variables, var_strings):
         pickle.dump(value_loc_tuple, handle)
 with open(pickle_dir + 'layout_dict.pickle', 'wb') as handle:
     pickle.dump(layout_dict, handle)
-hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]   
+hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]
 with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
     pickle.dump(hex_tuples, handle)
-    
+
 total = time.time()
 print('Total time', total - start)
