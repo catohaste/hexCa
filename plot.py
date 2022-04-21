@@ -52,7 +52,7 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     ax.axis('off')
     plt.tight_layout()
     
-    video_length = 30 # seconds
+    video_length = 10 # seconds
     fps = 24
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
@@ -118,7 +118,7 @@ def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layou
     ax.axis('off')
     plt.tight_layout()
     
-    if save_dir == 's    how':
+    if save_dir == 'show':
         plt.show()
     else:
         plt.savefig(save_dir + 'hexes_random.png')

@@ -10,7 +10,8 @@ from plot import animate_var_by_color
 ##################################################################################################
 # results folder
 results_dir = "results/"
-save_dir = results_dir + 'dev/'
+
+save_dir = results_dir + '2022-04-20_1744/'
 
 ##################################################################################################
 # LOAD PICKLES
