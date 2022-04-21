@@ -63,8 +63,6 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
             val = var_dict[hexa][i*sample_rate]
             hex_patches[hexa].set_facecolor(var_cmap(var_norm(val)))
         return
-    # anim = FuncAnimation(fig, animate, init_func=init, frames=number_of_frames, blit=False)
-    
 
     if file_str == 'show':
         print("animation not currently working")

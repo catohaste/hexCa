@@ -23,7 +23,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-# save_dir = results_dir + 'dev/'
+save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -85,20 +85,24 @@ params["D_IP3"] = 0
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
 Ca_cyt = allocate_var_dict(hex_array, store_timepoint_N, Ca_cyt_0)
+
 ip3 = allocate_var_dict(hex_array, store_timepoint_N, 0.2)
+# ip3 = initialize_var_dict_to_x_gradient(ip3, hex_array, (0,1.2), pointy)
+
 Ca_stored = allocate_var_dict(hex_array, store_timepoint_N, params["c_tot"] - Ca_cyt_0)
 ip3R_act = allocate_var_dict(hex_array, store_timepoint_N, 0.6)
 
 start = time.time()
 
 variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
 
 end = time.time()
 
 print('Time solving', end - start)
-    
-################################################################################################## 
+
+##################################################################################################
 # PLOT
 
 plot_vars = [Ca_cyt_new, ip3_new]
@@ -111,9 +115,6 @@ color_strings = ['Blues', 'Reds']
 # save figs
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # selected_t_idx = 0
-# plot_var_by_color(var_dict, selected_t_idx, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-# for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
-#     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 animate_var_by_color(Ca_cyt_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Blues', save_dir + 'Ca_cyt')
 animate_var_by_color(ip3_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'ip3')
@@ -121,7 +122,7 @@ animate_var_by_color(ip3_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), p
 anim_time = time.time()
 print('Time animating', anim_time - end)
 
-################################################################################################## 
+##################################################################################################
 # PICKLE
 
 pickle_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,]
@@ -136,9 +137,9 @@ for var, var_str in zip(pickle_vars, pickle_var_strings):
         pickle.dump(value_loc_tuple, handle)
 with open(pickle_dir + 'layout_dict.pickle', 'wb') as handle:
     pickle.dump(layout_dict, handle)
-hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]   
+hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]
 with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
     pickle.dump(hex_tuples, handle)
-    
+
 total = time.time()
 print('Total time', total - start)
