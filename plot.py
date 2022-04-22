@@ -132,8 +132,8 @@ def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
     ax = fig.add_subplot(111)
-
-    hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k') for center in hex_centers]
+    
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers]
     for patch in hex_patches:
         ax.add_patch(patch)
         
