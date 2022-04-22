@@ -23,7 +23,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-save_dir = results_dir + 'dev/'
+# save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -85,12 +85,19 @@ params["D_IP3"] = 0
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
 Ca_cyt = allocate_var_dict(hex_array, store_timepoint_N, Ca_cyt_0)
-
-ip3 = allocate_var_dict(hex_array, store_timepoint_N, 0.2)
-# ip3 = initialize_var_dict_to_x_gradient(ip3, hex_array, (0,1.2), pointy)
-
 Ca_stored = allocate_var_dict(hex_array, store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+
+# # gradient in calcium initial conditions
+# Ca_cyt = initialize_var_dict_to_x_gradient(Ca_cyt, hex_array, (0,Ca_cyt_0), pointy)
+# for hexa in hex_array:
+#     Ca_stored[hexa][0] = params["c_tot"] - Ca_cyt[hexa][0]
+    
+ip3 = allocate_var_dict(hex_array, store_timepoint_N, 0.2)
+# gradient in calcium initial conditions
+# ip3 = initialize_var_dict_to_x_gradient(Ca_cyt, hex_array, (0,1.2), pointy)
+
 ip3R_act = allocate_var_dict(hex_array, store_timepoint_N, 0.6)
+ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0,1.2), pointy)
 
 start = time.time()
 
