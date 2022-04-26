@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import RegularPolygon
 from shapely.geometry import Polygon
 from matplotlib.animation import FuncAnimation
-from collections import Counter
 
 from lib import *
 from functions import *
@@ -24,9 +23,44 @@ def set_axes_lims_from_hexes(ax, hexes, pointy_layout):
     ax.set_xlim([min_x - pointy_radius, max_x + pointy_radius])
     ax.set_ylim([min_y - pointy_radius, max_y + pointy_radius])
     
+def plot_var_over_time_fixed_x_avg_y(var_dict, hexes, pointy_layout, figsize_x, color_str, var_str, file_str):
+    
+    value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+    
+    value_loc_dict_averaged_over_y = create_val_loc_dict_average_over_y(value_loc_tuples)
+    
+    x_idx_max = len(list(value_loc_dict_averaged_over_y.keys())) - 1
+    x_locs = list(value_loc_dict_averaged_over_y.keys())
+    
+    x_locs.sort()
+    
+    selected_x_fractions = [0.1,0.3,0.5]    
+    selected_x_idxs = [int(np.round(frac * x_idx_max)) for frac in selected_x_fractions]
+    
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(figsize_x, 3))
+    
+    axs[0].set_ylabel(var_str + '\n(Mean over y-axis)', fontsize=14)
+    
+    for idx, ax in enumerate(axs):
+        
+        ax.set_title('x = ' + str(selected_x_fractions[idx]), fontsize=16)
+        ax.set_xlabel('Time', fontsize=14)
+        var_cmap = plt.get_cmap(color_str)
+        ax.plot(value_loc_dict_averaged_over_y[x_locs[selected_x_idxs[idx]]], color=var_cmap(0.8))
+    
+    fig.tight_layout()
+    
+    if file_str == 'show':
+        plt.show()
+    else:
+        plt.savefig(file_str + '_fixed_x_avg_over_y.png')
+
+    
 def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, var_str, file_str):
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+    
+    value_loc_dict_averaged_over_y = create_val_loc_dict_average_over_y(value_loc_tuples)
     
     fig = plt.figure(figsize=(figsize_x, 3))
     ax = fig.add_subplot(111)
@@ -40,21 +74,6 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
     ax.set_xticklabels([])
     ax.set_xlabel('Cell position along x-axis', fontsize=14)
     ax.set_ylabel(var_str + '\n(Mean over y-axis)', fontsize=14)
-    
-    value_loc_dict_averaged_over_y = {}
-    
-    x_locs = [np.round(loc[0], decimals=2) for val,loc in value_loc_tuples]
-    x_loc_counter_dict = Counter(x_locs)
-    
-    for x_loc in Counter(x_locs).keys():
-        value_loc_dict_averaged_over_y[x_loc] = np.zeros(timepoint_N, )
-
-    for val, loc in value_loc_tuples:
-        value_loc_dict_averaged_over_y[np.round(loc[0], decimals=2)] = np.add(value_loc_dict_averaged_over_y[np.round(loc[0], decimals=2)] , val)
-        # print(len(val), len(value_loc_dict_averaged_over_y[np.round(loc[0], decimals=2)]))
-
-    for loc in value_loc_dict_averaged_over_y:
-        value_loc_dict_averaged_over_y[loc] = value_loc_dict_averaged_over_y[loc] / x_loc_counter_dict[loc]
         
     x = list(value_loc_dict_averaged_over_y.keys())
     x.sort()
