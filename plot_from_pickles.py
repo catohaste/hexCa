@@ -4,14 +4,14 @@ import random
 
 from lib import *
 from functions import *
-from plot import animate_var_by_color
+from plot import animate_var_by_color, animate_var_over_x_avg_y
 
 
 ##################################################################################################
 # results folder
 results_dir = "results/"
 
-save_dir = results_dir + '2022-04-20_1744/'
+save_dir = results_dir + '2022-04-20_1033/'
 
 ##################################################################################################
 # LOAD PICKLES
@@ -47,14 +47,15 @@ hex_x_N,hex_y_N = 40, 6
 ##################################################################################################
 # PLOT
 
-plt.figure(figsize=(6, 6))
-plt.subplot(211)
-plt.plot(ip3[hex_array[0]])
-plt.subplot(212)
-plt.plot(ip3[hex_array[39]])
-
-plt.show()
+# plt.figure(figsize=(6, 6))
+# plt.subplot(211)
+# plt.plot(ip3[hex_array[0]])
+# plt.subplot(212)
+# plt.plot(ip3[hex_array[39]])
+#
+# plt.show()
 
 for var, var_str, color_str in zip(variables, var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+    # animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+    animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
     

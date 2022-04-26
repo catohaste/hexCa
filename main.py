@@ -55,7 +55,7 @@ pointy = create_layout_from_dict(layout_dict)
 flat = create_layout_from_dict(flat_layout_dict)
 
 ##################################################################################################
-# set up POINTY hexagonal grid with (q,r,s) coordinates
+# set up hexagonal grid with (q,r,s) coordinates
 hex_x_N = 40
 hex_y_N = 6
 hex_array = []
@@ -67,17 +67,17 @@ hex_array = []
 #         hex_array.append(Hex(-x-y,y,x))
 
 # RECTANGLE MAP
-# for y in range(hex_y_N):
-#     y_offset = int(np.floor(y/2))
-#     for x in range(-y_offset, hex_x_N - y_offset):
-#         hex_array.append(Hex(-x-y,y,x))
+for y in range(hex_y_N):
+    y_offset = int(np.floor(y/2))
+    for x in range(-y_offset, hex_x_N - y_offset):
+        hex_array.append(Hex(-x-y,y,x))
         
 # set up FLAT hexagonal grid with (q,r,s) coordinates
 # RECTANGLE MAP
-for x in range(hex_x_N):
-    x_offset = int(np.floor(x/2))
-    for y in range(-x_offset, hex_y_N - x_offset):
-        hex_array.append(Hex(x,y,-x-y))
+# for x in range(hex_x_N):
+#     x_offset = int(np.floor(x/2))
+#     for y in range(-x_offset, hex_y_N - x_offset):
+#         hex_array.append(Hex(x,y,-x-y))
         
 ##################################################################################################
 
