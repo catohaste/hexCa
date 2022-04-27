@@ -37,19 +37,30 @@ for filename in filenames:
 
 ################################################################################################## 
 # set up layout
+radius = 10.0
 layout_dict = {
     "layout_str": 'pointy',
     "center_x": 0,
     "center_y": 0,
-    "radius": 10.0
+    "radius": radius
 }
+flat_layout_dict = {
+    "layout_str": 'flat',
+    "center_x": 0,
+    "center_y": 0,
+    "radius": radius / np.sqrt(3/4)
+}
+
 pointy = create_layout_from_dict(layout_dict)
+flat = create_layout_from_dict(flat_layout_dict)
 
 ##################################################################################################
 # set up hexagonal grid with (q,r,s) coordinates
 hex_x_N = 40
 hex_y_N = 6
 hex_array = []
+
+# set up POINTY hexagonal grid with (q,r,s) coordinates
 # PARALLELOGRAM MAP
 # for x in range(hex_x_N):
 #     for y in range(hex_y_N):
@@ -60,6 +71,13 @@ for y in range(hex_y_N):
     y_offset = int(np.floor(y/2))
     for x in range(-y_offset, hex_x_N - y_offset):
         hex_array.append(Hex(-x-y,y,x))
+        
+# set up FLAT hexagonal grid with (q,r,s) coordinates
+# RECTANGLE MAP
+# for x in range(hex_x_N):
+#     x_offset = int(np.floor(x/2))
+#     for y in range(-x_offset, hex_y_N - x_offset):
+#         hex_array.append(Hex(x,y,-x-y))
         
 ##################################################################################################
 
@@ -103,7 +121,8 @@ start = time.time()
 
 variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
-Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
+# Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
 
 end = time.time()
 
@@ -120,11 +139,11 @@ color_strings = ['Blues', 'Reds']
 # plt.show()
 
 # save figs
-# plot_hexes(hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+plot_hexes(hex_array, (hex_x_N,hex_y_N), flat, 12, save_dir)
 # selected_t_idx = 0
 
-animate_var_by_color(Ca_cyt_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Blues', save_dir + 'Ca_cyt')
-animate_var_by_color(ip3_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'ip3')
+# animate_var_by_color(Ca_cyt_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Blues', save_dir + 'Ca_cyt')
+# animate_var_by_color(ip3_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'ip3')
 
 anim_time = time.time()
 print('Time animating', anim_time - end)

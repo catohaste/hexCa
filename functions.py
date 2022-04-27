@@ -1,4 +1,5 @@
 import numpy as np
+from collections import Counter
 
 from lib import *
 
@@ -110,6 +111,27 @@ def initialize_var_dict_to_x_gradient(var_dict, hex_array, value_range, pointy_l
     
     return var_dict
     
+def create_val_loc_dict_average_over_y(value_loc_tuples):
+    
+    value_loc_dict_averaged_over_y = {}
+    
+    x_locs = [np.round(loc[0], decimals=2) for val,loc in value_loc_tuples]
+    x_loc_counter_dict = Counter(x_locs)
+    
+    timepoint_N = len(value_loc_tuples[0][0])
+    
+    for x_loc in Counter(x_locs).keys():
+        value_loc_dict_averaged_over_y[x_loc] = np.zeros(timepoint_N, )
+
+    for val, loc in value_loc_tuples:
+        value_loc_dict_averaged_over_y[np.round(loc[0], decimals=2)] = np.add(value_loc_dict_averaged_over_y[np.round(loc[0], decimals=2)] , val)
+
+    for loc in value_loc_dict_averaged_over_y:
+        value_loc_dict_averaged_over_y[loc] = value_loc_dict_averaged_over_y[loc] / x_loc_counter_dict[loc]
+        
+    return value_loc_dict_averaged_over_y
+    
+
 def create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout):
     
     value_loc_tuples = []
