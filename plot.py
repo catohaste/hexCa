@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import RegularPolygon
 from shapely.geometry import Polygon
 from matplotlib.animation import FuncAnimation
+from copy import deepcopy
 
 from lib import *
 from functions import *
@@ -22,7 +23,7 @@ def set_axes_lims_from_hexes(ax, hexes, pointy_layout):
     max_y = np.max(hex_y_list)
     ax.set_xlim([min_x - pointy_radius, max_x + pointy_radius])
     ax.set_ylim([min_y - pointy_radius, max_y + pointy_radius])
-    
+
 def plot_var_over_time_fixed_x_avg_y(var_dict, hexes, pointy_layout, figsize_x, color_str, var_str, file_str):
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
@@ -77,7 +78,7 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
     x = list(value_loc_dict_averaged_over_y.keys())
     x.sort()
     
-    video_length = 10 # seconds
+    video_length = 30 # seconds
     fps = 48
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
@@ -151,7 +152,7 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     ax.axis('off')
     plt.tight_layout()
     
-    video_length = 10 # seconds
+    video_length = 30 # seconds
     fps = 48
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
@@ -250,4 +251,71 @@ def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
         plt.show()
     else:
         plt.savefig(save_dir + 'hexes_const.png')
+        
+def plot_hexes_highlight_cell(cell_loc, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
+    
+    chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
+    chosen_hexa = roffset_to_cube(-1, chosen_h)
+    
+    hex_array_minus_chosen = deepcopy(hexes)
+    
+    if chosen_hexa in hexes:
+        hex_array_minus_chosen.remove(chosen_hexa)
+    else:
+        print('Chosen cell not in hex array')
+        return
+    
+    pointy_radius = pointy_layout.size[0]
 
+    hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hex_array_minus_chosen]
+    chosen_hex_center = hex_to_pixel(pointy_layout, chosen_hexa)
+
+    grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    ax = fig.add_subplot(111)
+    
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=0) for center in hex_centers]
+    # hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers] # flat layout
+    for patch in hex_patches:
+        ax.add_patch(patch)
+        
+    chosen_patch = RegularPolygon((chosen_hex_center.x, chosen_hex_center.y), facecolor='C3', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=0)
+    ax.add_patch(chosen_patch)
+    
+    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+    
+    ax.set_aspect('equal')
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    plt.tight_layout()
+    
+    if save_dir == 'show':
+        plt.show()
+    else:
+        plt.savefig(save_dir + 'chosen_cell.png')
+
+def plot_all_vars_over_time_single_cell(cell_loc, variables, var_strings, col_strings, file_str):
+    
+    chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
+    chosen_hexa = roffset_to_cube(-1, chosen_h)
+    
+    Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
+    
+    fig, axs = plt.subplots(nrows=4, ncols=1, figsize=(4, 8))
+    
+    axs[0].set_title('cell at ' + str(cell_loc), fontsize=16)
+    axs[-1].set_xlabel('Time', fontsize=14)
+    
+    for idx, ax in enumerate(axs):
+        
+        var_cmap = plt.get_cmap(col_strings[idx])
+        
+        ax.plot(variables[idx][chosen_hexa], color = var_cmap(0.8) )
+        ax.set_ylabel(var_strings[idx])
+    
+    fig.tight_layout()
+    
+    if file_str == 'show':
+        plt.show()
+    else:
+        plt.savefig(file_str + '_all_vars_chosen_cell.png')
