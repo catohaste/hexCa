@@ -81,7 +81,10 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
     fps = 48
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
-    sample_rate = np.max(int(np.floor(timepoint_N / frames_N)), 1)
+    sample_rate = int(np.floor(timepoint_N / frames_N))
+    if sample_rate == 0:
+        sample_rate = 1
+        frames_N = timepoint_N
     # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
     def animate(i):
         for artist in plt.gca().lines + plt.gca().collections:
@@ -152,8 +155,11 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     fps = 48
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
-    sample_rate = np.max(int(np.floor(timepoint_N / frames_N)), 1)
-    print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    sample_rate = int(np.floor(timepoint_N / frames_N))
+    if sample_rate == 0:
+        sample_rate = 1
+        frames_N = timepoint_N
+    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
     def animate(i):
         for hexa in hexes:
             val = var_dict[hexa][i*sample_rate]

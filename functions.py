@@ -111,6 +111,27 @@ def initialize_var_dict_to_x_gradient(var_dict, hex_array, value_range, pointy_l
     
     return var_dict
     
+def initialize_var_dict_to_random_val_in_range(var_dict, value_range):
+    
+    for hexa in var_dict:
+        var_dict[hexa][0] = np.random.uniform(low=value_range[0], high=value_range[1])
+    
+    return var_dict
+    
+def set_initial_conditions_from_df(df, variables):
+    
+    Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
+    
+    for hexa in Ca_cyt:
+        row = df.sample(1)
+        Ca_cyt[hexa][0] = row['Ca_cyt']
+        ip3[hexa][0] = row['IP3']
+        Ca_stored[hexa][0] = row['Ca_stored']
+        ip3R_act[hexa][0] = row['IP3R_act']
+    
+    return Ca_cyt, ip3, Ca_stored, ip3R_act,
+        
+
 def create_val_loc_dict_average_over_y(value_loc_tuples):
     
     value_loc_dict_averaged_over_y = {}
@@ -131,7 +152,6 @@ def create_val_loc_dict_average_over_y(value_loc_tuples):
         
     return value_loc_dict_averaged_over_y
     
-
 def create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout):
     
     value_loc_tuples = []
