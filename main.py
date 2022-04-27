@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from lib import *
 from functions import *
 from models import *
-from plot import plot_hexes, plot_var_by_color, animate_var_by_color
+from plot import plot_hexes, plot_var_by_color, animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_time_fixed_x_avg_y
 
 from params import params
 
@@ -81,7 +81,7 @@ for y in range(hex_y_N):
         
 ##################################################################################################
 
-t_endpoint = 300
+t_endpoint = 100
 
 dt = 0.05
 store_dt = 0.5
@@ -109,20 +109,21 @@ Ca_stored = allocate_var_dict(hex_array, store_timepoint_N, params["c_tot"] - Ca
 # Ca_cyt = initialize_var_dict_to_x_gradient(Ca_cyt, hex_array, (0,Ca_cyt_0), pointy)
 # for hexa in hex_array:
 #     Ca_stored[hexa][0] = params["c_tot"] - Ca_cyt[hexa][0]
-    
+
 ip3 = allocate_var_dict(hex_array, store_timepoint_N, 0.2)
 # gradient in calcium initial conditions
 # ip3 = initialize_var_dict_to_x_gradient(Ca_cyt, hex_array, (0,1.2), pointy)
 
 ip3R_act = allocate_var_dict(hex_array, store_timepoint_N, 0.6)
-ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0,1.2), pointy)
+ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0.435,0.845), pointy)
+#ip3R_act (min, max) = (0.43397934441757985 0.8460908021227952)
 
 start = time.time()
 
 variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
-# Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
 
 end = time.time()
 
@@ -132,21 +133,41 @@ print('Time solving', end - start)
 # PLOT
 
 plot_vars = [Ca_cyt_new, ip3_new]
-plot_var_strings = ['Ca_cyt', 'ip3']
-color_strings = ['Blues', 'Reds']
+plot_var_strings = ['Ca_cyt', 'IP3']
+color_strings = ['Blues', 'Oranges']
+
+# plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
+# plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
+# color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']
 
 # plt.plot(store_t, ip3_new[hex_array[0]])
 # plt.show()
 
 # save figs
-plot_hexes(hex_array, (hex_x_N,hex_y_N), flat, 12, save_dir)
+# plot_hexes(hex_array, (hex_x_N,hex_y_N), flat, 12, save_dir)
 # selected_t_idx = 0
 
-# animate_var_by_color(Ca_cyt_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Blues', save_dir + 'Ca_cyt')
-# animate_var_by_color(ip3_new, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'ip3')
+# for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
+#     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+#     animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
+#     plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
 
 anim_time = time.time()
 print('Time animating', anim_time - end)
+
+##################################################################################################
+# STORE
+
+# csv_out = {
+#     "time": store_t,
+#     "Ca_cyt": Ca_cyt_new[Hex(0,0,0)] ,
+#     "IP3": ip3_new[Hex(0,0,0)],
+#     "Ca_stored": Ca_stored_new[Hex(0,0,0)] ,
+#     "IP3R_act": ip3R_act_new[Hex(0,0,0)]
+# }
+#
+# import pandas as pd
+# pd.DataFrame(csv_out).to_csv(save_dir + "ICs_V_PLC_0787.csv")
 
 ##################################################################################################
 # PICKLE
