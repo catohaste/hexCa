@@ -54,7 +54,6 @@ def plot_var_over_time_fixed_x_avg_y(var_dict, hexes, pointy_layout, figsize_x, 
         plt.show()
     else:
         plt.savefig(file_str + '_fixed_x_avg_over_y.png')
-
     
 def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, var_str, file_str):
     
@@ -78,11 +77,11 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
     x = list(value_loc_dict_averaged_over_y.keys())
     x.sort()
     
-    video_length = 30 # seconds
-    fps = 24
+    video_length = 10 # seconds
+    fps = 48
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
-    sample_rate = int(np.floor(timepoint_N / frames_N))
+    sample_rate = np.max(int(np.floor(timepoint_N / frames_N)), 1)
     # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
     def animate(i):
         for artist in plt.gca().lines + plt.gca().collections:
@@ -120,7 +119,6 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
         # plt.show()
         anim_mp4.save(file_str + '_avg_over_y.mp4', writer='ffmpeg', fps=fps)
     
-    
 def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str):
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
@@ -151,11 +149,11 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     plt.tight_layout()
     
     video_length = 10 # seconds
-    fps = 24
+    fps = 48
     interval_from_fps = 1000/fps
     frames_N = video_length * fps
-    sample_rate = int(np.floor(timepoint_N / frames_N))
-    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    sample_rate = np.max(int(np.floor(timepoint_N / frames_N)), 1)
+    print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
     def animate(i):
         for hexa in hexes:
             val = var_dict[hexa][i*sample_rate]
