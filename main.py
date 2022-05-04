@@ -90,7 +90,7 @@ for x in range(hex_x_N):
 
 t_endpoint = 200
 
-dt = 0.05
+dt = 0.005
 store_dt = 0.5
 time_scaling = store_dt / dt
 
@@ -102,9 +102,9 @@ store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
-# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
 
-# temporarily turn off cell-cell communication
+# set cell-cell communication, 0 => OFF, standard 0.02
 params["D_IP3"] = 0.02
 
 # allocation initial conditions for variables
@@ -117,15 +117,20 @@ ip3R_act = allocate_var_dict(hex_array, store_timepoint_N, 0.6)
 variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
 ##################################################################################################
-# set initial conditions
+""" SET INITIAL CONDITIONS """
 
+# set ICs randomly from V_PLC 0.787 df 
 ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
+# variables = set_initial_conditions_from_df(ICs_df, variables)
 
 # ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0.435,0.845), pointy)
 # ip3R_act = initialize_var_dict_to_random_val_in_range(ip3R_act, (0,1.2))
 #ip3R_act (min, max) = (0.43397934441757985 0.8460908021227952) for V_PLC 0.787
 
-variables = set_initial_conditions_from_df(ICs_df, variables)
+# set ICs less randomly from V_PLC 0.787 df
+# these conditions were selected randomly but now are the same for every run
+less_random_ICs_df = pd.read_csv("not_random_ICs.csv", delimiter=',', header=0, index_col=0)
+variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
 
 ##################################################################################################
 """ RUN """
@@ -140,7 +145,7 @@ end = time.time()
 print('Time solving', end - start)
 
 ##################################################################################################
-# PLOT
+""" PLOT """
 
 plot_vars = [Ca_cyt_new, ip3_new]
 plot_var_strings = ['Ca_cyt', 'IP3']
@@ -152,6 +157,7 @@ color_strings = ['Blues', 'Oranges']
 
 # save figs
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), flat, 12, save_dir)
+# plot_var_by_color(Ca_cyt_new, 0, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir+ 'Ca_cyt' + '_intial')
 
 for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
@@ -170,8 +176,9 @@ anim_time = time.time()
 print('Time animating', anim_time - end)
 
 ##################################################################################################
-# STORE
+""" STORE """
 
+# # create dataframe for initial conditions
 # csv_out = {
 #     "time": store_t,
 #     "Ca_cyt": Ca_cyt_new[Hex(0,0,0)] ,
@@ -181,9 +188,22 @@ print('Time animating', anim_time - end)
 # }
 #
 # pd.DataFrame(csv_out).to_csv(save_dir + "ICs_V_PLC_0787.csv")
+#
+# # create dataframe for less random initial conditions
+# new_col_names = ['q','r','s','time','Ca_cyt','IP3','Ca_stored','IP3R_act']
+# not_random_ICs_df = pd.DataFrame(columns=new_col_names)
+#
+# counter = 0
+# for hexa in hex_array:
+#     row = ICs_df.sample(1)
+#     new_row_values = [int(hexa.q), int(hexa.r), int(hexa.s)] +  row.values.flatten().tolist()
+#     new_dict = dict(zip(new_col_names, new_row_values))
+#     not_random_ICs_df = not_random_ICs_df.append(new_dict, ignore_index=True)
+#
+# not_random_ICs_df.to_csv('not_random_ICs.csv')
 
 ##################################################################################################
-# PICKLE
+""" PICKLE """
 
 pickle_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,]
 pickle_var_strings = ['Ca_cyt', 'ip3', 'Ca_stored', 'ip3R_act']

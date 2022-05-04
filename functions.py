@@ -130,6 +130,22 @@ def set_initial_conditions_from_df(df, variables):
         ip3R_act[hexa][0] = row['IP3R_act']
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
+    
+def set_initial_conditions_from_df_less_random(df, variables):
+    """ instead of choosing a random row (or set of initial conditions) collect a number for each hex.
+    """
+    
+    Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
+    
+    for index, row in df.iterrows():
+        # print(row['q'], row['r'],row['s'])
+        hexa = Hex(row['q'],row['r'],row['s'] )
+        Ca_cyt[hexa][0] = row['Ca_cyt']
+        ip3[hexa][0] = row['IP3']
+        Ca_stored[hexa][0] = row['Ca_stored']
+        ip3R_act[hexa][0] = row['IP3R_act']
+    
+    return Ca_cyt, ip3, Ca_stored, ip3R_act,
         
 
 def create_val_loc_dict_average_over_y(value_loc_tuples):
