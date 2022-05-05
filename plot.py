@@ -319,3 +319,68 @@ def plot_all_vars_over_time_single_cell(cell_loc, variables, var_strings, col_st
         plt.show()
     else:
         plt.savefig(file_str + '_all_vars_chosen_cell.png')
+
+def plot_links(links, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
+        
+    pointy_radius = pointy_layout.size[0]
+    
+    timepoint_N = len(links)
+
+    hex_centers = [hex_to_pixel(pointy_layout, hex) for hex in hexes]
+
+    grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    ax = fig.add_subplot(111)
+    
+    var_cmap = plt.get_cmap(color_str)
+    
+    hex_patches = [RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(0.4), alpha=0.5, numVertices=6, radius=pointy_radius) for center in hex_centers]
+    # hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers]
+    for patch in hex_patches:
+        ax.add_patch(patch)
+        
+    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+    
+    video_length = 30 # seconds
+    fps = 48
+    interval_from_fps = 1000/fps
+    frames_N = video_length * fps
+    sample_rate = int(np.floor(timepoint_N / frames_N))
+    if sample_rate == 0:
+        sample_rate = 1
+        frames_N = timepoint_N
+    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    plot_memory = 5
+    current_time_line_tuples = []
+    def animate(i):
+        t_links = links[i*sample_rate]
+        
+        for time_line_tuple in current_time_line_tuples:
+            time = time_line_tuple[0]
+            line = time_line_tuple[1]
+            if time + plot_memory < i:
+                line.remove()
+                current_time_line_tuples.remove(time_line_tuple)
+                
+        for link in t_links:
+            point1 = hex_to_pixel(pointy_layout, link["hexes"][0])
+            point2 = hex_to_pixel(pointy_layout, link["hexes"][1])
+            x_coords = [point[0] for point in (point1,point2)]
+            y_coords = [point[1] for point in (point1,point2)]
+            l, = ax.plot(x_coords, y_coords, color='k')
+            current_time_line_tuples.append((i,l))
+            
+        return
+    
+    ax.set_aspect('equal')
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    plt.tight_layout()
+    
+    if file_str == 'show':
+        plt.show()
+    else:
+        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        
+        

@@ -10,6 +10,19 @@ def Hill(a,K,var,pow):
 def tau_p(k_3K, k_5P):
     return 1 / (k_3K + k_5P)
 
+def get_lim_of_var_dict(var_dict):
+    
+    min_val = 0
+    max_val = 0
+    
+    for hexa in var_dict:
+        hex_min = min(var_dict[hexa])
+        hex_max = max(var_dict[hexa])
+        min_val = min(min_val, hex_min)
+        max_val = max(max_val, hex_max)
+        
+        return min_val, max_val
+
 def create_layout_from_dict(layout_dict):
     
     if layout_dict["layout_str"] == "pointy":
@@ -147,6 +160,41 @@ def set_initial_conditions_from_df_less_random(df, variables):
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
         
+def make_links(var_dict, store_t):
+    
+    links = []
+    
+    var_dict_lim = get_lim_of_var_dict(var_dict)
+    var_dict_diff = var_dict_lim[1] - var_dict_lim[0]
+    on_threshold = var_dict_lim[0] + 0.6 * var_dict_diff
+    close_threhold = 0.05 * var_dict_diff
+    
+    t_diff_range = (1, 1)
+    t_diff_points = list(range(t_diff_range[0], t_diff_range[1] + 1))
+    t_diff_min = min(t_diff_points)
+    
+    for t_idx, time in enumerate(store_t):
+        links_current_time = []
+        if t_idx < t_diff_min:
+            # links.append(links_current_time)
+            continue
+        for hexa in var_dict:
+            for direction in range(6):
+                hexa_neighbor = hex_neighbor(hexa, direction)
+                for t_diff in t_diff_points:
+                    try:
+                        if var_dict[hexa][t_idx] > on_threshold and abs(var_dict[hexa][t_idx] - var_dict[hexa_neighbor][t_idx - t_diff]) < close_threhold:
+                            link = {
+                                "time_lim_idx": (t_idx - t_diff, t_idx),
+                                "hexes": (hexa_neighbor, hexa),
+                                "var_lims": (var_dict[hexa_neighbor][t_idx - t_diff], var_dict[hexa][t_idx])
+                            }
+                            links_current_time.append(link)
+                    except KeyError:
+                        continue
+        links.append(links_current_time)
+
+    return links
 
 def create_val_loc_dict_average_over_y(value_loc_tuples):
     

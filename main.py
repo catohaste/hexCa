@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from lib import *
 from functions import *
 from models import *
-from plot import plot_hexes, plot_var_by_color, animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_time_fixed_x_avg_y, plot_hexes_highlight_cell, plot_all_vars_over_time_single_cell
+from plot import plot_hexes, plot_var_by_color, animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_time_fixed_x_avg_y, plot_hexes_highlight_cell, plot_all_vars_over_time_single_cell, plot_links
 
 from params import params
 
@@ -88,9 +88,9 @@ for x in range(hex_x_N):
 
 ##################################################################################################
 
-t_endpoint = 200
+t_endpoint = 600
 
-dt = 0.005
+dt = 0.05
 store_dt = 0.5
 time_scaling = store_dt / dt
 
@@ -140,14 +140,30 @@ start = time.time()
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
 
-end = time.time()
+solv_time = time.time()
 
-print('Time solving', end - start)
+print('Time solving', solv_time - start)
+
+##################################################################################################
+""" MAKE LINKS """
+
+
+Ca_cyt_links = make_links(Ca_cyt_new, store_t)
+ip3_links = make_links(ip3_new, store_t)
+
+link_time = time.time()
+
+# print(len(links))
+# for t_idx, t_links in enumerate(links):
+#     print(t_idx, len(t_links))
+
+print('Time linking', link_time - solv_time)
 
 ##################################################################################################
 """ PLOT """
 
 plot_vars = [Ca_cyt_new, ip3_new]
+link_vars = [Ca_cyt_links, ip3_links]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Blues', 'Oranges']
 
@@ -159,21 +175,22 @@ color_strings = ['Blues', 'Oranges']
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), flat, 12, save_dir)
 # plot_var_by_color(Ca_cyt_new, 0, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir+ 'Ca_cyt' + '_intial')
 
-for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
+for var, link_var, var_str, color_str in zip(plot_vars, link_vars, plot_var_strings, color_strings):
     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
-    animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
-    plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
+    # animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
+#     plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
+    plot_links(link_var, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + "_links" )
 
 new_variables = Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,
 all_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
 all_color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']
 
 chosen_cell = (16,4)
-plot_hexes_highlight_cell(chosen_cell, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-plot_all_vars_over_time_single_cell(chosen_cell, new_variables, all_var_strings, all_color_strings, save_dir)
+# plot_hexes_highlight_cell(chosen_cell, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# plot_all_vars_over_time_single_cell(chosen_cell, new_variables, all_var_strings, all_color_strings, save_dir)
 
 anim_time = time.time()
-print('Time animating', anim_time - end)
+print('Time animating', anim_time - link_time)
 
 ##################################################################################################
 """ STORE """
