@@ -320,6 +320,35 @@ def plot_all_vars_over_time_single_cell(cell_loc, variables, var_strings, col_st
     else:
         plt.savefig(file_str + '_all_vars_chosen_cell.png')
 
+def plot_var_running_time_avg_single_cell(cell_loc, var_dict, var_str, color_str, file_str):
+    
+    chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
+    chosen_hexa = roffset_to_cube(-1, chosen_h)
+    
+    timepoint_N = len(var_dict[chosen_hexa])
+    
+    running_avg_N = 100
+    running_avg = np.convolve(var_dict[chosen_hexa], np.ones(running_avg_N)/running_avg_N, mode='valid')
+    time_running_avg = range(running_avg_N, timepoint_N + 1)
+        
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 3))
+    
+    ax.set_ylabel(var_str + '\n(Running average)', fontsize=14)
+    
+    ax.set_xlabel('Time', fontsize=14)
+    var_cmap = plt.get_cmap(color_str)
+    ax.plot(time_running_avg, running_avg, color=var_cmap(0.8))
+    # ax.plot(running_avg_with_zeros, color=var_cmap(0.8))
+    
+    ax.set_xlim([0,timepoint_N])
+    
+    fig.tight_layout()
+    
+    if file_str == 'show':
+        plt.show()
+    else:
+        plt.savefig(file_str + '_running_avg_single_cell.png')
+
 def plot_links(links, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
         
     pointy_radius = pointy_layout.size[0]
