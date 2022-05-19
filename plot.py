@@ -35,7 +35,7 @@ def plot_var_over_time_fixed_x_avg_y(var_dict, hexes, pointy_layout, figsize_x, 
     
     x_locs.sort()
     
-    selected_x_fractions = [0.1,0.3,0.5]    
+    selected_x_fractions = [0.1,0.3,0.5,0.7,0.9]    
     selected_x_idxs = [int(np.round(frac * x_idx_max)) for frac in selected_x_fractions]
     
     fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(figsize_x, 3))
@@ -252,23 +252,23 @@ def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     else:
         plt.savefig(save_dir + 'hexes_const.png')
         
-def plot_hexes_highlight_cell(cell_loc, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
-    
-    chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
-    chosen_hexa = roffset_to_cube(-1, chosen_h)
-    
+def plot_hexes_highlight_cells(cell_locs, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
+
     hex_array_minus_chosen = deepcopy(hexes)
     
-    if chosen_hexa in hexes:
-        hex_array_minus_chosen.remove(chosen_hexa)
-    else:
-        print('Chosen cell not in hex array')
-        return
-    
     pointy_radius = pointy_layout.size[0]
+    
+    for cell_loc in cell_locs:
+        chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
+        chosen_hexa = roffset_to_cube(-1, chosen_h)
+        if chosen_hexa in hexes:
+            hex_array_minus_chosen.remove(chosen_hexa)
+        else:
+            print('Chosen cell '+ str(cell_loc)+' not in hex array')
+            cell_locs.remove(cell_loc)
+            continue
 
     hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hex_array_minus_chosen]
-    chosen_hex_center = hex_to_pixel(pointy_layout, chosen_hexa)
 
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
@@ -278,9 +278,13 @@ def plot_hexes_highlight_cell(cell_loc, hexes, hex_grid_dim, pointy_layout, figs
     # hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers] # flat layout
     for patch in hex_patches:
         ax.add_patch(patch)
-        
-    chosen_patch = RegularPolygon((chosen_hex_center.x, chosen_hex_center.y), facecolor='C3', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=0)
-    ax.add_patch(chosen_patch)
+    
+    for cell_loc in cell_locs:
+        chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
+        chosen_hexa = roffset_to_cube(-1, chosen_h)
+        chosen_hex_center = hex_to_pixel(pointy_layout, chosen_hexa)
+        chosen_patch = RegularPolygon((chosen_hex_center.x, chosen_hex_center.y), facecolor='C3', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=0)
+        ax.add_patch(chosen_patch)
     
     set_axes_lims_from_hexes(ax, hexes, pointy_layout)
     
@@ -294,31 +298,81 @@ def plot_hexes_highlight_cell(cell_loc, hexes, hex_grid_dim, pointy_layout, figs
     else:
         plt.savefig(save_dir + 'chosen_cell.png')
 
-def plot_all_vars_over_time_single_cell(cell_loc, variables, var_strings, col_strings, file_str):
-    
-    chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
-    chosen_hexa = roffset_to_cube(-1, chosen_h)
+def plot_all_vars_over_time_single_cells(cell_locs, variables, var_strings, col_strings, file_str):
     
     Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
     
-    fig, axs = plt.subplots(nrows=4, ncols=1, figsize=(4, 8))
+    chosen_cell_N = len(cell_locs)
+    var_N = len(variables)
     
-    axs[0].set_title('cell at ' + str(cell_loc), fontsize=16)
-    axs[-1].set_xlabel('Time', fontsize=14)
+    col_N = chosen_cell_N
+    row_N = var_N
+    ax_N = col_N * row_N
     
-    for idx, ax in enumerate(axs):
+    fig, axs = plt.subplots(nrows=row_N, ncols=col_N, figsize=(4*col_N, 2*row_N))
+    
+    for var_idx in range(var_N):
+    
+        for cell_idx in range(chosen_cell_N):
         
-        var_cmap = plt.get_cmap(col_strings[idx])
-        
-        ax.plot(variables[idx][chosen_hexa], color = var_cmap(0.8) )
-        ax.set_ylabel(var_strings[idx])
+            cell_loc = cell_locs[cell_idx]
+            chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
+            chosen_hexa = roffset_to_cube(-1, chosen_h)
+            
+            axs[0][cell_idx].set_title('cell at ' + str(cell_loc), fontsize=16)
+            axs[var_N - 1][cell_idx].set_xlabel('Time', fontsize=14)
+            
+            ax = axs[var_idx][cell_idx]
+            
+            var_cmap = plt.get_cmap(col_strings[var_idx])
+            ax.plot(variables[var_idx][chosen_hexa], color = var_cmap(0.8) )
+            if cell_idx == 0:
+                ax.set_ylabel(var_strings[var_idx])
     
     fig.tight_layout()
     
     if file_str == 'show':
         plt.show()
     else:
-        plt.savefig(file_str + '_all_vars_chosen_cell.png')
+        plt.savefig(file_str + '_all_vars_chosen_cells.png')
+
+def plot_var_running_time_avg_single_cells(cell_locs, running_avg_N, var_dict, var_str, color_str, file_str):
+    
+    chosen_cell_N = len(cell_locs)
+    first_loc = cell_locs[0]
+    first_h = OffsetCoord(first_loc[0], first_loc[1])
+    first_hexa = roffset_to_cube(-1, first_h)
+    timepoint_N = len(var_dict[first_hexa])
+    
+    if chosen_cell_N == 1: 
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(4, 3))
+        axs = [ax]
+    else: 
+        fig, axs = plt.subplots(nrows=1, ncols=chosen_cell_N, figsize=(4*chosen_cell_N, 3))
+        
+    for ax_idx, ax in enumerate(axs):
+        
+        cell_loc = cell_locs[ax_idx]
+        chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
+        chosen_hexa = roffset_to_cube(-1, chosen_h)
+        
+        running_avg = np.convolve(var_dict[chosen_hexa], np.ones(running_avg_N)/running_avg_N, mode='valid')
+        time_running_avg = range(running_avg_N, timepoint_N + 1)
+        
+        ax.set_title('cell at ' + str(cell_locs[ax_idx]))
+        ax.set_xlabel('Time', fontsize=14)
+        var_cmap = plt.get_cmap(color_str)
+        ax.plot(time_running_avg, running_avg, color=var_cmap(0.8))
+        ax.set_xlim([0,timepoint_N])
+        
+    axs[0].set_ylabel(var_str + '\n(Running average)', fontsize=14)
+    
+    fig.tight_layout()
+    
+    if file_str == 'show':
+        plt.show()
+    else:
+        plt.savefig(file_str + '_running_avg_single_cells.png')
 
 def plot_links(links, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
         
