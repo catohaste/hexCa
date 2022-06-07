@@ -144,7 +144,8 @@ def random_pulsing(var_dict, hex_array, timepoint_N, value_range):
     directions = [1,-1]
     for hexa in hex_array:
         var_dict[hexa] = np.ndarray((timepoint_N,), dtype=float)
-        var_dict[hexa][0] = random.randint(value_range[0], value_range[1])
+        # var_dict[hexa][0] = random.randint(value_range[0], value_range[1])
+        var_dict[hexa][0] = np.random.uniform(low=value_range[0], high=value_range[1])
         direction_dict[hexa] = random.choice(directions)
         
     

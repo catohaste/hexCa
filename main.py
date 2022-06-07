@@ -1,3 +1,4 @@
+import sys
 from os import mkdir, path
 import random
 import pickle
@@ -5,6 +6,7 @@ import datetime
 from shutil import copy2
 import time
 import pandas as pd
+import networkx as nx
 
 import matplotlib.pyplot as plt
 
@@ -24,7 +26,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-# save_dir = results_dir + 'dev/'
+save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -88,7 +90,7 @@ for x in range(hex_x_N):
 
 ##################################################################################################
 
-t_endpoint = 2400
+t_endpoint = 1200
 
 dt = 0.05
 store_dt = 0.5
@@ -133,12 +135,36 @@ less_random_ICs_df = pd.read_csv("not_random_ICs.csv", delimiter=',', header=0, 
 variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
 
 ##################################################################################################
+""" SET CONNECTIONS """
+
+# connection params
+neighbour_dist_limit = 2 # how far away can I connect
+init_avg_degree = 4 # average number of connections I'm aiming for
+connect_birth_rate = 4 # connection birth rate
+connect_death_rate = 2 # connection death rate
+
+# allocate 
+store_cell_connections = []
+for t in range(store_timepoint_N):
+    store_cell_connections.append(nx.Graph())
+
+for t in range(store_timepoint_N):
+    store_cell_connections[t].add_nodes_from(hex_array)
+    
+# initialize    
+init_cell_connections = []
+
+
+
+print(cell_connections[0])
+
+##################################################################################################
 """ RUN """
 
 start = time.time()
 
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
-Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
+# Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
 
 solv_time = time.time()
 
@@ -169,15 +195,14 @@ print('Time pickling', pickling_time - solv_time)
 ##################################################################################################
 """ MAKE LINKS """
 
-Ca_cyt_links = make_links(Ca_cyt_new, store_t)
-ip3_links = make_links(ip3_new, store_t)
-
-link_time = time.time()
+# Ca_cyt_links = make_links(Ca_cyt_new, store_t)
+# ip3_links = make_links(ip3_new, store_t)
 
 # print(len(links))
 # for t_idx, t_links in enumerate(links):
 #     print(t_idx, len(t_links))
 
+link_time = time.time()
 print('Time linking', link_time - pickling_time)
 
 ##################################################################################################
@@ -201,15 +226,15 @@ all_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
 all_color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']
 
 chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
-plot_hexes_highlight_cells(chosen_cells, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
-plot_all_vars_over_time_single_cells(chosen_cells, new_variables, all_var_strings, all_color_strings, save_dir)
-
-for var, link_var, var_str, color_str in zip(plot_vars, link_vars, plot_var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
-    animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
-    plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
-    plot_links(link_var, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + "_links" )
-    plot_var_running_time_avg_single_cells(chosen_cells, 400, var, var_str, color_str, save_dir + var_str)
+# plot_hexes_highlight_cells(chosen_cells, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
+# plot_all_vars_over_time_single_cells(chosen_cells, new_variables, all_var_strings, all_color_strings, save_dir)
+#
+# for var, link_var, var_str, color_str in zip(plot_vars, link_vars, plot_var_strings, color_strings):
+#     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+#     animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
+#     plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
+#     plot_links(link_var, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + "_links" )
+#     plot_var_running_time_avg_single_cells(chosen_cells, 400, var, var_str, color_str, save_dir + var_str)
 
 anim_time = time.time()
 print('Time animating', anim_time - link_time)

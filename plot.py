@@ -127,11 +127,18 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
-    # get colormap
-    min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-    max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-    var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-    var_cmap = plt.get_cmap(color_str)
+    if color_str == 'constant':
+        # get colormap
+        min_val = 0
+        max_val = 1
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap('Greys')
+    else:
+        # get colormap
+        min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
+        max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap(color_str)
     
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
@@ -193,15 +200,22 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
 
-def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
+def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir):
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
-    # get colormap
-    min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-    max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-    var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-    var_cmap = plt.get_cmap('Purples')
+    if color_str == 'constant':
+        # get colormap
+        min_val = 0
+        max_val = 1
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap('Greys')
+    else:
+        # get colormap
+        min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
+        max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap(color_str)
 
     hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
     
@@ -224,7 +238,7 @@ def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layou
     if save_dir == 'show':
         plt.show()
     else:
-        plt.savefig(save_dir + 'hexes_random.png')
+        plt.savefig(save_dir + '.png')
     
 def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
@@ -236,7 +250,8 @@ def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
     ax = fig.add_subplot(111)
     
-    hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers]
+    # hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers]
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=0) for center in hex_centers]
     for patch in hex_patches:
         ax.add_patch(patch)
         

@@ -131,6 +131,21 @@ def initialize_var_dict_to_random_val_in_range(var_dict, value_range):
     
     return var_dict
     
+def set_var_dict_to_random_val_in_range_all_t(var_dict, value_range):
+    
+    keys = []
+    for key in var_dict:
+        keys.append(key)
+        
+    timepoint_N = len(var_dict[keys[0]])
+
+    for hexa in var_dict:
+        var_dict[hexa][0] = np.random.uniform(low=value_range[0], high=value_range[1])
+        for t in range(1, timepoint_N):
+            var_dict[hexa][t] = var_dict[hexa][0]
+
+    return var_dict
+    
 def set_initial_conditions_from_df(df, variables):
     
     Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
