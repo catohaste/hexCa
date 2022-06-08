@@ -90,7 +90,7 @@ for x in range(hex_x_N):
 
 ##################################################################################################
 
-t_endpoint = 1200
+t_endpoint = 600
 
 dt = 0.05
 store_dt = 0.5
@@ -138,18 +138,18 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 """ SET CONNECTIONS """
 
 # connection params
-neighbour_dist_limit = 2 # how far away can I connect
-init_avg_degree = 3 # average number of connections I'm aiming for
+neighbour_dist_limit = 1 # how far away can I connect
+init_avg_degree = 0.16 # average number of connections I'm aiming for
 connect_birth_rate = 4 # connection birth rate
 connect_death_rate = 2 # connection death rate
 
-# allocate 
-store_cell_connections = []
-for t in range(store_timepoint_N):
-    store_cell_connections.append(nx.Graph())
-
-for t in range(store_timepoint_N):
-    store_cell_connections[t].add_nodes_from(hex_array)
+# # allocate
+# store_cell_connections = []
+# for t in range(store_timepoint_N):
+#     store_cell_connections.append(nx.Graph())
+#
+# for t in range(store_timepoint_N):
+#     store_cell_connections[t].add_nodes_from(hex_array)
 
 potential_connections = nx.Graph()
 potential_connections.add_nodes_from(hex_array)
@@ -180,25 +180,30 @@ def get_mean_degree_ratio(connections, potential_connections):
     
 ##################################################################################################
     
-print('before', test_degree_ratio(initial_connections, potential_connections))
+print('before', get_mean_degree_ratio(initial_connections, potential_connections))
 
-while test_degree_ratio(initial_connections, potential_connections) < 0.16:
+while get_mean_degree_ratio(initial_connections, potential_connections) < init_avg_degree:
     random_edge = random.sample(potential_connections.edges, 1)[0]
     initial_connections.add_edge(random_edge[0], random_edge[1])
 
-print('after',test_degree_ratio(initial_connections, potential_connections))
+print('after',get_mean_degree_ratio(initial_connections, potential_connections))
 
 pos = {}
 for hexa in hex_array:
     center = hex_to_pixel(pointy, hexa)
     pos[hexa] = [center.x, center.y]
 
-# nx.draw_networkx_edges(potential_connections, pos)
-# plt.show()
+store_cell_connections = []
+for t in range(store_timepoint_N):
+    # store_cell_connections.append(initial_connections)
+    store_cell_connections.append(potential_connections)
+    
+print(len(store_cell_connections))
+print(len(store_cell_connections[0]))
 
-# nx.draw_networkx_edges(potential_connections, pos, edge_color='k')
-nx.draw_networkx_edges(initial_connections, pos, edge_color='k')
-plt.show()
+# print("size initial", sys.getsizeof(initial_connections))
+# print("size potential", sys.getsizeof(potential_connections))
+# print("size full", sys.getsizeof(store_cell_connections))
 
 ##################################################################################################
 """ RUN """
@@ -207,6 +212,7 @@ start = time.time()
 
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
 # Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(variables, store_cell_connections, run_t, store_t, hex_array, params)
 
 solv_time = time.time()
 
@@ -240,7 +246,8 @@ print('Time pickling', pickling_time - solv_time)
 # Ca_cyt_links = make_links(Ca_cyt_new, store_t)
 # ip3_links = make_links(ip3_new, store_t)
 
-# print(len(links))
+# print(len(ip3_links))
+# print(ip3_links)
 # for t_idx, t_links in enumerate(links):
 #     print(t_idx, len(t_links))
 
@@ -254,6 +261,9 @@ plot_vars = [Ca_cyt_new, ip3_new]
 # link_vars = [Ca_cyt_links, ip3_links]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Blues', 'Oranges']
+
+for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
+    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
 # plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
@@ -277,6 +287,16 @@ chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
 #     plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
 #     plot_links(link_var, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + "_links" )
 #     plot_var_running_time_avg_single_cells(chosen_cells, 400, var, var_str, color_str, save_dir + var_str)
+
+# draw network
+# nx.draw_networkx_edges(potential_connections, pos)
+# plt.show()
+
+# nx.draw_networkx_edges(potential_connections, pos, edge_color='k')
+# nx.draw_networkx_edges(initial_connections, pos, edge_color='k')
+# plt.show()
+
+# animate_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections')
 
 anim_time = time.time()
 print('Time animating', anim_time - link_time)
