@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 from matplotlib.patches import RegularPolygon
 from shapely.geometry import Polygon
 from matplotlib.animation import FuncAnimation
@@ -9,6 +10,52 @@ from copy import deepcopy
 from lib import *
 from functions import *
 from plot import set_axes_lims_from_hexes
+
+# def truncate_colormap(cmap, minval=0.0, maxval=1.0, trunc_min=0,trunc_min=1, n=100):
+#     new_cmap = colors.LinearSegmentedColormap.from_list(
+#         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+#         cmap(np.linspace(minval, maxval, n)))
+#     return new_cmap
+    
+def truncate_norm_for_cmap(data_min_val, data_max_val, trunc_min, trunc_max):
+    """ trunc_min and truc_max between 0 and 1 """
+    
+    data_width = data_max_val - data_min_val
+    trunc_width = trunc_max - trunc_min
+    
+    scaling = data_width / trunc_width
+    additive_const = data_min_val - trunc_min * scaling
+    
+    cmap_min = additive_const
+    cmap_max = scaling + additive_const
+    
+    var_norm = mpl.colors.Normalize(vmin=cmap_min, vmax=cmap_max)
+
+    return var_norm
+    
+def get_truncated_norm(stripe, value_loc_tuples):
+    
+    data_min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
+    data_max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
+    
+    if stripe == 'black':
+        min_val = 0
+        max_val = 1
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+    elif stripe == 'brown':
+        var_norm = truncate_norm_for_cmap(data_min_val, data_max_val, 0, 0.5)
+    elif stripe == 'red':
+        var_norm = truncate_norm_for_cmap(data_min_val, data_max_val, 0.2, 1)
+    elif stripe == 'orange':
+        var_norm = truncate_norm_for_cmap(data_min_val, data_max_val, 0.3, 0.8)
+    elif stripe == 'yellow':
+        var_norm = truncate_norm_for_cmap(data_min_val, data_max_val, 0.2, 1)
+    elif stripe == 'green':
+        var_norm = truncate_norm_for_cmap(data_min_val, data_max_val, 0.2, 1)
+    else:
+        var_norm = mpl.colors.Normalize(vmin=data_min_val, vmax=data_max_val)
+        
+    return var_norm
 
 def animate_var_flag(flag_var_dict, timepoint_N, flag_hexes, stripe_dim, pointy_layout, figsize_x, file_str):
     
@@ -29,7 +76,6 @@ def animate_var_flag(flag_var_dict, timepoint_N, flag_hexes, stripe_dim, pointy_
     norms = {}
     cmaps = {}
     
-    
     number_of_stripes = len(flag_hexes)
     
     grid_aspect_ratio = (stripe_dim[1] * number_of_stripes) / stripe_dim[0]
@@ -42,43 +88,16 @@ def animate_var_flag(flag_var_dict, timepoint_N, flag_hexes, stripe_dim, pointy_
     for stripe in flag_hexes:
         
         var_dict = flag_var_dict[stripe]
-        hexes = flag_hexes[stripe]
-    
-        value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+        hexes = flag_hexes[stripe]        
         
         color_str = colormap_strings[stripe]
-        if stripe == 'black':
-            # get colormap
-            min_val = 0
-            max_val = 1
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-            var_cmap = plt.get_cmap(color_str)
-        elif stripe == 'brown':
-            min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-            max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-            width = max_val - min_val
-            # var_norm = mpl.colors.Normalize(vmin=min_val - 2*width, vmax=max_val ) # YlOrBr
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val + width) # copper
-            var_cmap = plt.get_cmap(color_str)
-        elif stripe == 'yellow':
-            min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-            max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-            width = max_val - min_val
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val + width)
-            var_cmap = plt.get_cmap(color_str)
-        else:
-            # get colormap
-            min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-            max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-            var_cmap = plt.get_cmap(color_str)
-            
-    
-        norms[stripe] = var_norm
+        var_cmap = plt.get_cmap(color_str)
         cmaps[stripe] = var_cmap
         
-        value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)    
+        value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
         
+        var_norm = get_truncated_norm(stripe, value_loc_tuples)
+        norms[stripe] = var_norm
         
         for hexa in hexes:
             val = var_dict[hexa][0]
@@ -169,36 +188,14 @@ def plot_var_flag(flag_var_dict, timepoint_idx, flag_hexes, stripe_dim, pointy_l
     for stripe in flag_hexes:
         
         var_dict = flag_var_dict[stripe]
-        hexes = flag_hexes[stripe]
-    
-        value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+        hexes = flag_hexes[stripe] 
         
         color_str = colormap_strings[stripe]
-        if stripe == 'black':
-            # get colormap
-            min_val = 0
-            max_val = 1
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-            var_cmap = plt.get_cmap(color_str)
-        elif stripe == 'brown':
-            min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-            max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-            width = max_val - min_val
-            # var_norm = mpl.colors.Normalize(vmin=min_val - 2*width, vmax=max_val ) # YlOrBr
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val + width) # copper
-            var_cmap = plt.get_cmap(color_str)
-        elif stripe == 'yellow':
-            min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-            max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-            width = max_val - min_val
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val + width)
-            var_cmap = plt.get_cmap(color_str)
-        else:
-            # get colormap
-            min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
-            max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
-            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-            var_cmap = plt.get_cmap(color_str)
+        var_cmap = plt.get_cmap(color_str)
+        
+        value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+        
+        var_norm = get_truncated_norm(stripe, value_loc_tuples)
 
         hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
     

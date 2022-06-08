@@ -149,7 +149,7 @@ def random_pulsing(var_dict, hex_array, timepoint_N, value_range):
         direction_dict[hexa] = random.choice(directions)
         
     
-    value_increment = (2 * (value_range[1] - value_range[0])) / (timepoint_N - 1) # for looping purposes
+    value_increment = (4 * (value_range[1] - value_range[0])) / (timepoint_N - 1) # for looping purposes
     for t in range(1, timepoint_N):
         for hexa in hex_array:
             if var_dict[hexa][t-1] <= value_range[0] or var_dict[hexa][t-1] >= value_range[1]:

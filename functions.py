@@ -1,5 +1,6 @@
 import numpy as np
 from collections import Counter
+from copy import deepcopy
 
 from lib import *
 
@@ -124,6 +125,48 @@ def initialize_var_dict_to_x_gradient(var_dict, hex_array, value_range, pointy_l
     
     return var_dict
     
+def initialize_var_dict_to_x_gradient_from_ICs_df(df, variables, hex_array, pointy_layout):
+    
+    Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
+    
+    radius = pointy_layout.size[0]
+    
+    centers = {}
+    for hexa in hex_array:
+        centers[hexa] = hex_to_pixel(pointy_layout, hexa)
+        
+    x_coords = [centers[hexa][0] for hexa in centers]
+    
+    x_cols = list(set(x_coords))
+    x_cols.sort()
+    x_cols_N = len(x_cols)
+    
+    row_indices = list(df.index)
+    rows_N = len(df)
+    
+    if x_cols_N > rows_N:
+        row_copies_N = int(np.ceil(x_cols_N / rows_N))
+        out_row_indices = []
+        for i in range(row_copies_N):
+            for index in row_indices:
+                out_row_indices.append(index)
+        out_row_indices.sort()
+        out_row_indices = out_row_indices[:x_cols_N]
+    else:
+        out_row_indices = row_indices[:x_cols_N]
+    
+    for hexa in hex_array:
+        current_x = centers[hexa][0]
+        x_idx = x_cols.index(current_x)
+        row_idx = out_row_indices[x_idx]
+        row = df.loc[row_idx]
+        Ca_cyt[hexa][0] = row['Ca_cyt']
+        ip3[hexa][0] = row['IP3']
+        Ca_stored[hexa][0] = row['Ca_stored']
+        ip3R_act[hexa][0] = row['IP3R_act']
+    
+    return Ca_cyt, ip3, Ca_stored, ip3R_act,
+
 def initialize_var_dict_to_random_val_in_range(var_dict, value_range):
     
     for hexa in var_dict:

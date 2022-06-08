@@ -87,7 +87,7 @@ for stripe in stripes:
 
 ##################################################################################################
 
-t_endpoint = 100
+t_endpoint = 600
 
 dt = 0.05
 store_dt = 0.5
@@ -98,40 +98,6 @@ store_t = np.arange(0,t_endpoint,store_dt)
 
 run_timepoint_N = len(run_t)
 store_timepoint_N = len(store_t)
-
-##################################################################################################
-
-# initialize V_PLC, different value in each hex
-params["V_PLC"] = allocate_var_dict(stripes['yellow'], 1, 0.787)
-# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], stripes['yellow'], 0.85, 0, 1, pointy)
-
-# set cell-cell communication, 0 => OFF, standard 0.02
-params["D_IP3"] = 0
-
-# allocation initial conditions for variables
-Ca_cyt_0 = 2
-Ca_cyt = allocate_var_dict(stripes['yellow'], store_timepoint_N, Ca_cyt_0)
-Ca_stored = allocate_var_dict(stripes['yellow'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
-ip3 = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.2)
-ip3R_act = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.6)
-
-variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
-
-##################################################################################################
-""" SET INITIAL CONDITIONS """
-
-# set ICs randomly from V_PLC 0.787 df
-ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
-variables = set_initial_conditions_from_df(ICs_df, variables)
-
-# ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0.435,0.845), pointy)
-# ip3R_act = initialize_var_dict_to_random_val_in_range(ip3R_act, (0,1.2))
-#ip3R_act (min, max) = (0.43397934441757985 0.8460908021227952) for V_PLC 0.787
-
-# set ICs less randomly from V_PLC 0.787 df
-# these conditions were selected randomly but now are the same for every run
-# less_random_ICs_df = pd.read_csv("not_random_ICs.csv", delimiter=',', header=0, index_col=0)
-# variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
 
 ##################################################################################################
 
@@ -157,14 +123,63 @@ orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 
 orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 1, 3, pointy)
 orange_var = diffusion(orange_var, stripes['orange'], store_timepoint_N)
 
+##################################################################################################
+""" YELLOW """
 # calcium no diffusion (more meaningful)
-yellow_var = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.6)
-yellow_var = initialize_var_dict_to_x_gradient(yellow_var, stripes['yellow'], (0,1), pointy)
-brown_var = set_var_dict_to_random_val_in_range_all_t(brown_var, [0,1])
 
-# calcium with diffusion (more meaningful)
-green_var = allocate_var_dict(stripes['green'], store_timepoint_N, 0.6)
-green_var = set_var_dict_to_random_val_in_range_all_t(green_var, [0,1])
+# initialize V_PLC, different value in each hex
+params["V_PLC"] = allocate_var_dict(stripes['yellow'], 1, 0.787)
+
+# set cell-cell communication, 0 => OFF, standard 0.02
+params["D_IP3"] = 0
+
+# allocation initial conditions for variables
+Ca_cyt_0 = 2
+Ca_cyt = allocate_var_dict(stripes['yellow'], store_timepoint_N, Ca_cyt_0)
+Ca_stored = allocate_var_dict(stripes['yellow'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+ip3 = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.2)
+ip3R_act = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.6)
+
+variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+
+# set ICs randomly from V_PLC 0.787 df
+ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
+variables = initialize_var_dict_to_x_gradient_from_ICs_df(ICs_df, variables, stripes['yellow'], pointy)
+
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['yellow'], params)
+
+yellow_var = Ca_cyt_new
+
+##################################################################################################
+""" GREEN """
+# calcium with diffusion (turing pattern)
+
+# initialize V_PLC, different value in each hex
+params["V_PLC"] = allocate_var_dict(stripes['green'], 1, 0.787)
+
+# set cell-cell communication, 0 => OFF, standard 0.02
+params["D_IP3"] = 0.02
+
+# allocation initial conditions for variables
+Ca_cyt_0 = 2
+Ca_cyt = allocate_var_dict(stripes['green'], store_timepoint_N, Ca_cyt_0)
+Ca_stored = allocate_var_dict(stripes['green'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+ip3 = allocate_var_dict(stripes['green'], store_timepoint_N, 0.2)
+ip3R_act = allocate_var_dict(stripes['green'], store_timepoint_N, 0.6)
+
+variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+
+# set ICs randomly from V_PLC 0.787 df
+ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
+variables = set_initial_conditions_from_df(ICs_df, variables)
+
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['green'], params)
+
+green_var = Ca_cyt_new
+
+##################################################################################################
 
 # ??? BCS
 blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.6)
@@ -190,7 +205,7 @@ stripes_var = {
 
 plot_var_flag(stripes_var, 150, stripes, (hex_x_N, hex_y_N), pointy, 12, save_dir + 'flag' + '_initial')
 
-# animate_var_flag(stripes_var, store_timepoint_N, stripes, (hex_x_N,hex_y_N), pointy, 12, save_dir + 'flag')
+animate_var_flag(stripes_var, store_timepoint_N, stripes, (hex_x_N,hex_y_N), pointy, 12, save_dir + 'flag')
 
 ##################################################################################################
 # """ SET INITIAL CONDITIONS """
@@ -237,8 +252,7 @@ plot_var_flag(stripes_var, 150, stripes, (hex_x_N, hex_y_N), pointy, 12, save_di
 #
 # start = time.time()
 #
-# Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
-# # Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
+
 #
 # solv_time = time.time()
 #
