@@ -139,7 +139,7 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 
 # connection params
 neighbour_dist_limit = 2 # how far away can I connect
-init_avg_degree = 4 # average number of connections I'm aiming for
+init_avg_degree = 3 # average number of connections I'm aiming for
 connect_birth_rate = 4 # connection birth rate
 connect_death_rate = 2 # connection death rate
 
@@ -150,13 +150,55 @@ for t in range(store_timepoint_N):
 
 for t in range(store_timepoint_N):
     store_cell_connections[t].add_nodes_from(hex_array)
+
+potential_connections = nx.Graph()
+potential_connections.add_nodes_from(hex_array)
+for hexa in hex_array:
+    neighbors = hex_neighbors_variable_distance(hexa, neighbour_dist_limit)
+    for neighbor in neighbors:
+        if neighbor in hex_array:
+            potential_connections.add_edge(hexa, neighbor)
+            
+initial_connections = nx.Graph()
+initial_connections.add_nodes_from(hex_array)
+
+
+##################################################################################################
+potential_deg = list(dict(potential_connections.degree()).values())
+print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
+
+def get_mean_degree_ratio(connections, potential_connections):
     
-# initialize    
-init_cell_connections = []
+    degree_ratio = {}
+    
+    for hexa in connections:
+         degree_ratio[hexa] = connections.degree(hexa) / potential_connections.degree(hexa)
 
+    mean_degree_ratio = np.mean(list(degree_ratio.values()))
+    
+    return mean_degree_ratio
+    
+##################################################################################################
+    
+print('before', test_degree_ratio(initial_connections, potential_connections))
 
+while test_degree_ratio(initial_connections, potential_connections) < 0.16:
+    random_edge = random.sample(potential_connections.edges, 1)[0]
+    initial_connections.add_edge(random_edge[0], random_edge[1])
 
-print(cell_connections[0])
+print('after',test_degree_ratio(initial_connections, potential_connections))
+
+pos = {}
+for hexa in hex_array:
+    center = hex_to_pixel(pointy, hexa)
+    pos[hexa] = [center.x, center.y]
+
+# nx.draw_networkx_edges(potential_connections, pos)
+# plt.show()
+
+# nx.draw_networkx_edges(potential_connections, pos, edge_color='k')
+nx.draw_networkx_edges(initial_connections, pos, edge_color='k')
+plt.show()
 
 ##################################################################################################
 """ RUN """
@@ -209,7 +251,7 @@ print('Time linking', link_time - pickling_time)
 """ PLOT """
 
 plot_vars = [Ca_cyt_new, ip3_new]
-link_vars = [Ca_cyt_links, ip3_links]
+# link_vars = [Ca_cyt_links, ip3_links]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Blues', 'Oranges']
 
