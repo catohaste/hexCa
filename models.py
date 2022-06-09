@@ -113,6 +113,11 @@ def politi_reduced_connectivity(variables, connections_over_t, run_t, store_t, h
             old_ip3R_act[hexa] = new_ip3R_act[hexa]
             
             if t in store_t:
+                
+                t_idx = store_t.tolist().index(t)
+                
+                current_connection_graph = connections_over_t[t_idx]
+                
                 store_t_idx = int((t_idx+1) / time_scaling)
                 
                 Ca_cyt[hexa][store_t_idx] = new_Ca_cyt[hexa]

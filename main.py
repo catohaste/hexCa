@@ -26,7 +26,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-save_dir = results_dir + 'dev/'
+# save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -138,7 +138,7 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 """ SET CONNECTIONS """
 
 # connection params
-neighbour_dist_limit = 1 # how far away can I connect
+neighbour_dist_limit = 2 # how far away can I connect
 init_avg_degree = 0.16 # average number of connections I'm aiming for
 connect_birth_rate = 4 # connection birth rate
 connect_death_rate = 2 # connection death rate
@@ -165,7 +165,7 @@ initial_connections.add_nodes_from(hex_array)
 
 ##################################################################################################
 potential_deg = list(dict(potential_connections.degree()).values())
-print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
+# print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
 
 def get_mean_degree_ratio(connections, potential_connections):
     
@@ -180,13 +180,13 @@ def get_mean_degree_ratio(connections, potential_connections):
     
 ##################################################################################################
     
-print('before', get_mean_degree_ratio(initial_connections, potential_connections))
+# print('before', get_mean_degree_ratio(initial_connections, potential_connections))
 
 while get_mean_degree_ratio(initial_connections, potential_connections) < init_avg_degree:
     random_edge = random.sample(potential_connections.edges, 1)[0]
     initial_connections.add_edge(random_edge[0], random_edge[1])
 
-print('after',get_mean_degree_ratio(initial_connections, potential_connections))
+# print('after',get_mean_degree_ratio(initial_connections, potential_connections))
 
 pos = {}
 for hexa in hex_array:
@@ -195,11 +195,11 @@ for hexa in hex_array:
 
 store_cell_connections = []
 for t in range(store_timepoint_N):
-    # store_cell_connections.append(initial_connections)
-    store_cell_connections.append(potential_connections)
+    store_cell_connections.append(initial_connections)
+    # store_cell_connections.append(potential_connections)
     
-print(len(store_cell_connections))
-print(len(store_cell_connections[0]))
+# print(len(store_cell_connections))
+# print(len(store_cell_connections[0]))
 
 # print("size initial", sys.getsizeof(initial_connections))
 # print("size potential", sys.getsizeof(potential_connections))
@@ -297,6 +297,7 @@ chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
 # plt.show()
 
 # animate_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections')
+plot_initial_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_initial')
 
 anim_time = time.time()
 print('Time animating', anim_time - link_time)

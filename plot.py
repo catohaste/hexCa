@@ -449,10 +449,10 @@ def plot_links(links, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, 
     if file_str == 'show':
         plt.show()
     else:
-        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=True)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
         
-def animate_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
+def plot_initial_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
         
     pointy_radius = pointy_layout.size[0]
     
@@ -472,39 +472,17 @@ def animate_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, figsiz
         ax.add_patch(patch)
         
     set_axes_lims_from_hexes(ax, hexes, pointy_layout)
-    
-    video_length = 30 # seconds
-    fps = 48
-    interval_from_fps = 1000/fps
-    frames_N = video_length * fps
-    sample_rate = int(np.floor(timepoint_N / frames_N))
-    if sample_rate == 0:
-        sample_rate = 1
-        frames_N = timepoint_N
-    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
-    
-    lines = []
-    
-    def animate(i):
+            
+    current_connections_graph = connections_over_t[0]
+    for edge in current_connections_graph.edges:
         
-        for line in lines:
-            line.remove()
-            lines.remove(line)
-            
-        current_connections_graph = connections_over_t[i*sample_rate]
-        for edge in current_connections_graph.edges:
-            
-            point1 = hex_to_pixel(pointy_layout, edge[0])
-            point2 = hex_to_pixel(pointy_layout, edge[1])
-            
-            x_coords = [point[0] for point in (point1,point2)]
-            y_coords = [point[1] for point in (point1,point2)]
-            
-            l, = ax.plot(x_coords, y_coords, color='k')
-            
-            lines.append(l)
-            
-        return
+        point1 = hex_to_pixel(pointy_layout, edge[0])
+        point2 = hex_to_pixel(pointy_layout, edge[1])
+        
+        x_coords = [point[0] for point in (point1,point2)]
+        y_coords = [point[1] for point in (point1,point2)]
+        
+        l, = ax.plot(x_coords, y_coords, color='k')
     
     ax.set_aspect('equal')
     fig.patch.set_visible(False)
@@ -514,7 +492,8 @@ def animate_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, figsiz
     if file_str == 'show':
         plt.show()
     else:
-        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
-        anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        plt.savefig(file_str + '.png')
+        
+
         
         
