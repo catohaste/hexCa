@@ -494,6 +494,70 @@ def plot_initial_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, f
     else:
         plt.savefig(file_str + '.png')
         
+def demo_connections(connection_params, pointy_layout):
+
+    pointy_radius = pointy_layout.size[0]
+    
+    middle_hex = Hex(0,0,0)
+
+    fig = plt.figure(figsize=(4, 4))
+    ax = fig.add_subplot(111)
+    
+    var_cmap = plt.get_cmap('Oranges')
+    
+    
+    
+    for dist in range(4):
+        
+        hexes = []
+
+        if dist == 0:
+            hexes = [middle_hex]
+        else:
+            current_directions = all_hex_directions[dist - 1]
+            for direction in current_directions:
+                hexes.append(hex_neighbor_cato(middle_hex,direction))
+            
+        for hexa in hexes:
+
+            hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
+            
+            color = 1 - dist * 0.25
+    
+            hex_patches = [RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(color), alpha=1, numVertices=6, radius=pointy_radius) for center in hex_centers]
+            # hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers]
+            for patch in hex_patches:
+                ax.add_patch(patch)
+                
+    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+        
+    # dist_lim = connection_params['dist_lim']
+    #
+    # potential_connections = for dist in rangedist_lim
+    #
+    # current_connections_graph = connections_over_t[0]
+    # for edge in current_connections_graph.edges:
+    #
+    #     point1 = hex_to_pixel(pointy_layout, edge[0])
+    #     point2 = hex_to_pixel(pointy_layout, edge[1])
+    #
+    #     x_coords = [point[0] for point in (point1,point2)]
+    #     y_coords = [point[1] for point in (point1,point2)]
+    #
+    #     l, = ax.plot(x_coords, y_coords, color='k')
+    
+    ax.set_aspect('equal')
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    plt.tight_layout()
+    
+    file_str = 'connection_demo'
+    
+    if file_str == 'show':
+        plt.show()
+    else:
+        plt.savefig(file_str + '.png')
+        
 
         
         

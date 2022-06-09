@@ -143,6 +143,11 @@ init_avg_degree = 0.16 # average number of connections I'm aiming for
 connect_birth_rate = 4 # connection birth rate
 connect_death_rate = 2 # connection death rate
 
+connection_params = {
+    'dist_limit': neighbour_dist_limit,
+    'init_avg_degree': init_avg_degree
+}
+
 # # allocate
 # store_cell_connections = []
 # for t in range(store_timepoint_N):
@@ -212,7 +217,7 @@ start = time.time()
 
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
 # Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
-Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(variables, store_cell_connections, run_t, store_t, hex_array, params)
+# Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(variables, store_cell_connections, run_t, store_t, hex_array, params)
 
 solv_time = time.time()
 
@@ -262,8 +267,8 @@ plot_vars = [Ca_cyt_new, ip3_new]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Blues', 'Oranges']
 
-for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+# for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
+    # animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
 # plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
@@ -298,6 +303,7 @@ chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
 
 # animate_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections')
 plot_initial_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_initial')
+demo_connections(connection_params, pointy)
 
 anim_time = time.time()
 print('Time animating', anim_time - link_time)
