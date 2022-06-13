@@ -1,6 +1,7 @@
 results/
 *.pickle
 a_model_in_development/
+demo/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
