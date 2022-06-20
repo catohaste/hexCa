@@ -39,6 +39,34 @@ def hex_direction(direction):
 def hex_neighbor(hex, direction):
     return hex_add(hex, hex_direction(direction))
 
+def hex_neighbor_cato(hex, direction):
+    return hex_add(hex, direction)
+    
+########################################################################################################
+
+hex_first_directions = [Hex(1, 0, -1), Hex(1, -1, 0), Hex(0, -1, 1), Hex(-1, 0, 1), Hex(-1, 1, 0), Hex(0, 1, -1)]
+hex_second_directions = [Hex(2, 0, -2), Hex(1, 1, -2), Hex(0, 2, -2), Hex(-1, 2, -1), Hex(-2, 2, 0), Hex(-2, 1, 1), Hex(-2, 0, 2), Hex(-1, -1, 2), Hex(0, -2, 2), Hex(1, -2, 1), Hex(2, -2, 0), Hex(2, -1, -1)]
+hex_third_directions = [Hex(3,0,-3), Hex(2,1,-3), Hex(1,2,-3), Hex(0,3,-3), Hex(-1,3,-2), Hex(-2,3,-1), Hex(-3,3,0), Hex(-3,2,1), Hex(-3,1,2), Hex(-3,0,3), Hex(-2,-1,3), Hex(-1,-2,3), Hex(0,-3,3), Hex(1,-3,2), Hex(2,-3,1), Hex(3,-3,0), Hex(3,-2,-1), Hex(3,-1,-2)]
+
+all_hex_directions = [hex_first_directions, hex_second_directions, hex_third_directions]
+
+def hex_neighbors_variable_distance(hexa, distance):
+    """ degree should be int, 0 or 1 or 2
+    distance how far away neighbors are allowed to be from input hex
+    """
+    
+    neighbors = []
+    for dist in range(distance):
+        current_directions = all_hex_directions[dist]
+        for direction in current_directions:
+            neighbor = hex_neighbor_cato(hexa, direction)
+            neighbors.append(neighbor)
+
+    return neighbors
+    
+
+########################################################################################################
+
 hex_diagonals = [Hex(2, -1, -1), Hex(1, -2, 1), Hex(-1, -1, 2), Hex(-2, 1, 1), Hex(-1, 2, -1), Hex(1, 1, -2)]
 def hex_diagonal_neighbor(hex, direction):
     return hex_add(hex, hex_diagonals[direction])
