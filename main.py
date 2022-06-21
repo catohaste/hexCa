@@ -138,8 +138,8 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 """ SET CONNECTIONS """
 
 # connection params
-neighbour_dist_limit = 1 # how far away can I connect
-init_avg_degree_fraction = 1 # average fraction of potential connections
+neighbour_dist_limit = 2 # how far away can I connect
+init_avg_degree_fraction = 0.33 # average fraction of potential connections
 boundary_conditions = 'no-flux' # flux or no-flux
 
 connect_birth_rate = 4 # connection birth rate

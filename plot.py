@@ -558,7 +558,7 @@ def demo_connections(connection_params, pointy_layout):
             for hexa in hexes:
                 center = hex_to_pixel(pointy_layout, hexa)
                 dist = neighbor_dist_dict[hexa]
-                color = 1 - dist * 0.25
+                color = 1 - np.ceil(dist*0.25)
                 hex_patch = RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(color), alpha=1, numVertices=6, radius=pointy_radius)
                 ax.add_patch(hex_patch)
         elif identifier[0] == 'edge': # add patch for all hexes below edge
@@ -566,7 +566,7 @@ def demo_connections(connection_params, pointy_layout):
                 if hexa.r <= 0:
                    center = hex_to_pixel(pointy_layout, hexa)
                    dist = neighbor_dist_dict[hexa]
-                   color = 1 - dist * 0.25
+                   color = 1 - np.ceil(dist*0.25)
                    hex_patch = RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(color), alpha=1, numVertices=6, radius=pointy_radius)
                    ax.add_patch(hex_patch)
                    
@@ -595,7 +595,7 @@ def demo_connections(connection_params, pointy_layout):
             actual_connections.add_edge(random_edge[0], random_edge[1])
             current_middle_degree = actual_connections.degree(middle_hex)
             
-        print(current_middle_degree, potential_middle_degree)
+        # print(current_middle_degree, potential_middle_degree)
             
         if identifier[1] == 'potential':
             plot_connections = potential_connections
