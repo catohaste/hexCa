@@ -297,5 +297,16 @@ def hex_to_tuple(hex):
     
 def tuple_to_hex(hex_tuple):
     return Hex(hex_tuple[0], hex_tuple[1], hex_tuple[2])
+    
+def get_mean_degree_fraction(connections, potential_connections):
+    
+    degree_ratio = {}
+    
+    for hexa in connections:
+         degree_ratio[hexa] = connections.degree(hexa) / potential_connections.degree(hexa)
+
+    mean_degree_ratio = np.mean(list(degree_ratio.values()))
+    
+    return mean_degree_ratio
         
     
