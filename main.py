@@ -26,7 +26,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-# save_dir = results_dir + 'dev/'
+save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -139,13 +139,16 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 
 # connection params
 neighbour_dist_limit = 2 # how far away can I connect
-init_avg_degree = 0.16 # average number of connections I'm aiming for
+init_avg_degree_fraction = 0.33 # average fraction of potential connections
+boundary_conditions = 'no-flux' # flux or no-flux
+
 connect_birth_rate = 4 # connection birth rate
 connect_death_rate = 2 # connection death rate
 
 connection_params = {
     'dist_limit': neighbour_dist_limit,
-    'init_avg_degree': init_avg_degree
+    'init_avg_degree_fraction': init_avg_degree_fraction,
+    'boundary_conditions': boundary_conditions
 }
 
 # # allocate
@@ -159,7 +162,7 @@ connection_params = {
 potential_connections = nx.Graph()
 potential_connections.add_nodes_from(hex_array)
 for hexa in hex_array:
-    neighbors = hex_neighbors_variable_distance(hexa, neighbour_dist_limit)
+    neighbors = hex_neighbors_cumulative_distance(hexa, neighbour_dist_limit)
     for neighbor in neighbors:
         if neighbor in hex_array:
             potential_connections.add_edge(hexa, neighbor)
@@ -171,26 +174,11 @@ initial_connections.add_nodes_from(hex_array)
 ##################################################################################################
 potential_deg = list(dict(potential_connections.degree()).values())
 # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
-
-def get_mean_degree_ratio(connections, potential_connections):
-    
-    degree_ratio = {}
-    
-    for hexa in connections:
-         degree_ratio[hexa] = connections.degree(hexa) / potential_connections.degree(hexa)
-
-    mean_degree_ratio = np.mean(list(degree_ratio.values()))
-    
-    return mean_degree_ratio
-    
-##################################################################################################
     
 # print('before', get_mean_degree_ratio(initial_connections, potential_connections))
-
-while get_mean_degree_ratio(initial_connections, potential_connections) < init_avg_degree:
+while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
     random_edge = random.sample(potential_connections.edges, 1)[0]
     initial_connections.add_edge(random_edge[0], random_edge[1])
-
 # print('after',get_mean_degree_ratio(initial_connections, potential_connections))
 
 pos = {}

@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import networkx as nx
 from matplotlib.patches import RegularPolygon
 from shapely.geometry import Polygon
 from matplotlib.animation import FuncAnimation
 from copy import deepcopy
+import itertools
+import random
 
 from lib import *
 from functions import *
@@ -495,69 +498,127 @@ def plot_initial_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, f
         plt.savefig(file_str + '.png')
         
 def demo_connections(connection_params, pointy_layout):
+    """
+    I need 4 plots for the demo, which can then be altered depending on the three parameters we are varying
+    The plots will represent: (middle cell and edge cell) with (potential connection and actual connection)
+    the three parameters we can vary are:
+        - boundary_conditions (no-flux and flux)
+        - max_connection_distance
+        - average_connection_fraction
+    Boundary conditions might be a little sketchy. In the real model, I might want to have different BCs for each boundary. I might also want to include periodic BCs
+    """
 
     pointy_radius = pointy_layout.size[0]
     
+    dist_lim = connection_params['dist_limit']
+    connect_fraction = connection_params['init_avg_degree_fraction']
+    boundary_conditions = connection_params['boundary_conditions']
+    
     middle_hex = Hex(0,0,0)
-
-    fig = plt.figure(figsize=(4, 4))
-    ax = fig.add_subplot(111)
     
     var_cmap = plt.get_cmap('Oranges')
+    linewidths_by_distance = {
+        1 : 4,
+        2 : 2,
+        3 : 1
+    }
     
+    # add hexes
+    hexes = []
+    neighbor_dist_dict = {}
     
+    hexes.append(middle_hex)
+    neighbor_dist_dict[middle_hex] = 0
     
-    for dist in range(4):
+    for dist in range(3):
+        current_neighbors = hex_neighbors_specific_distance(middle_hex, dist)
+        for neighbor in current_neighbors:
+            hexes.append(neighbor)
+            neighbor_dist_dict[neighbor] = dist + 1
+            
+    # I need 4 plots for the demo
+    middle_or_edge = ['middle', 'edge']
+    potential_or_actual = ['potential','actual']
+    figures = []
+    
+    figure_identifiers = list(itertools.product(middle_or_edge, potential_or_actual))
+    for identifier in figure_identifiers:
+        fig = plt.figure(figsize=(4, 4), tight_layout=True)
+        ax = fig.add_subplot(111)
+        figures.append(fig)
         
-        hexes = []
+    for fig, identifier in zip(figures, figure_identifiers):
+        
+        ax = fig.get_axes()[0]
+        
+        set_axes_lims_from_hexes(ax, hexes, pointy_layout)
 
-        if dist == 0:
-            hexes = [middle_hex]
+        # add patches
+        if identifier[0] == 'middle': # add patch for all hexes
+            for hexa in hexes:
+                center = hex_to_pixel(pointy_layout, hexa)
+                dist = neighbor_dist_dict[hexa]
+                color = 1 - np.ceil(dist*0.25)
+                hex_patch = RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(color), alpha=1, numVertices=6, radius=pointy_radius)
+                ax.add_patch(hex_patch)
+        elif identifier[0] == 'edge': # add patch for all hexes below edge
+            for hexa in hexes:
+                if hexa.r <= 0:
+                   center = hex_to_pixel(pointy_layout, hexa)
+                   dist = neighbor_dist_dict[hexa]
+                   color = 1 - np.ceil(dist*0.25)
+                   hex_patch = RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(color), alpha=1, numVertices=6, radius=pointy_radius)
+                   ax.add_patch(hex_patch)
+                   
+        # add connections
+        potential_connections = nx.Graph()
+        potential_connections.add_nodes_from(hexes)
+        if boundary_conditions == 'no-flux' and identifier[0] == 'edge':
+            for dist in range(dist_lim):
+                current_neighbors = hex_neighbors_specific_distance(middle_hex, dist)
+                for neighbor in current_neighbors:
+                    if neighbor.r <= 0:
+                        potential_connections.add_edge(middle_hex, neighbor)
         else:
-            current_directions = all_hex_directions[dist - 1]
-            for direction in current_directions:
-                hexes.append(hex_neighbor_cato(middle_hex,direction))
+            for dist in range(dist_lim):
+                current_neighbors = hex_neighbors_specific_distance(middle_hex, dist)
+                for neighbor in current_neighbors:
+                    potential_connections.add_edge(middle_hex, neighbor)
+                    
+        actual_connections = nx.Graph()
+        actual_connections.add_nodes_from(hexes)
+        
+        current_middle_degree = actual_connections.degree(middle_hex)
+        potential_middle_degree = potential_connections.degree(middle_hex)
+        while (current_middle_degree) / potential_middle_degree < connect_fraction:
+            random_edge = random.sample(potential_connections.edges, 1)[0]
+            actual_connections.add_edge(random_edge[0], random_edge[1])
+            current_middle_degree = actual_connections.degree(middle_hex)
             
-        for hexa in hexes:
-
-            hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
+        # print(current_middle_degree, potential_middle_degree)
             
-            color = 1 - dist * 0.25
-    
-            hex_patches = [RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(color), alpha=1, numVertices=6, radius=pointy_radius) for center in hex_centers]
-            # hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers]
-            for patch in hex_patches:
-                ax.add_patch(patch)
-                
-    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
-        
-    # dist_lim = connection_params['dist_lim']
-    #
-    # potential_connections = for dist in rangedist_lim
-    #
-    # current_connections_graph = connections_over_t[0]
-    # for edge in current_connections_graph.edges:
-    #
-    #     point1 = hex_to_pixel(pointy_layout, edge[0])
-    #     point2 = hex_to_pixel(pointy_layout, edge[1])
-    #
-    #     x_coords = [point[0] for point in (point1,point2)]
-    #     y_coords = [point[1] for point in (point1,point2)]
-    #
-    #     l, = ax.plot(x_coords, y_coords, color='k')
-    
-    ax.set_aspect('equal')
-    fig.patch.set_visible(False)
-    ax.axis('off')
-    plt.tight_layout()
-    
-    file_str = 'connection_demo'
-    
-    if file_str == 'show':
-        plt.show()
-    else:
-        plt.savefig(file_str + '.png')
-        
+        if identifier[1] == 'potential':
+            plot_connections = potential_connections
+        elif identifier[1] == 'actual':
+            plot_connections = actual_connections
+                    
+        for edge in plot_connections.edges:
+            
+            point1 = hex_to_pixel(pointy_layout, edge[0])
+            point2 = hex_to_pixel(pointy_layout, edge[1])
 
+            x_coords = [point[0] for point in (point1,point2)]
+            y_coords = [point[1] for point in (point1,point2)]
+
+            current_dist = neighbor_dist_dict[edge[1]]
+
+            l, = ax.plot(x_coords, y_coords, color='k', linewidth=linewidths_by_distance[current_dist])
+                                    
+        ax.set_aspect('equal')
+        ax.axis('off')
+        fig.patch.set_visible(False)
         
+        file_str = 'demo/demo_' + 'BC_' + boundary_conditions + '_distLim_' + str(dist_lim) + '_fraction_' + str(connect_fraction) + '_' + identifier[1] + '_' + identifier[0]
+        fig.savefig(file_str + '.png')
+    
         
