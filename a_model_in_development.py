@@ -27,7 +27,7 @@ if not path.isdir(save_dir):
 code_dir = save_dir + "code/"
 if not path.isdir(code_dir):
     mkdir(code_dir)
-filenames = ['a_model_in_development.py', 'functions.py', 'plot.py','plot_a_model_in_development.py',  'models.py', 'params.py']
+filenames = ['a_model_in_development.py', 'functions.py', 'plot.py','plot_a_model_in_development.py',  'models.py', 'params.py', 'lib.py']
 for filename in filenames:
     copy2(filename, code_dir + filename)
 

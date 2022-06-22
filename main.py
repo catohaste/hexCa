@@ -7,6 +7,7 @@ from shutil import copy2
 import time
 import pandas as pd
 import networkx as nx
+from copy import deepcopy
 
 import matplotlib.pyplot as plt
 
@@ -34,7 +35,7 @@ if not path.isdir(save_dir):
 code_dir = save_dir + "code/"
 if not path.isdir(code_dir):
     mkdir(code_dir)
-filenames = ['main.py', 'functions.py', 'plot.py', 'models.py', 'params.py']
+filenames = ['main.py', 'functions.py', 'plot.py', 'models.py', 'params.py', 'lib.py']
 for filename in filenames:
     copy2(filename, code_dir + filename)
 
@@ -139,7 +140,7 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 
 # connection params
 neighbour_dist_limit = 2 # how far away can I connect
-init_avg_degree_fraction = 0.33 # average fraction of potential connections
+init_avg_degree_fraction = 0.25 # average fraction of potential connections
 boundary_conditions = 'no-flux' # flux or no-flux
 
 connect_birth_rate = 4 # connection birth rate
@@ -170,16 +171,20 @@ for hexa in hex_array:
 initial_connections = nx.Graph()
 initial_connections.add_nodes_from(hex_array)
 
+print("\ninitial", initial_connections)
+print("\npotential", potential_connections)
 
 ##################################################################################################
 potential_deg = list(dict(potential_connections.degree()).values())
 # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
     
-# print('before', get_mean_degree_ratio(initial_connections, potential_connections))
+print('before', get_mean_degree_fraction(initial_connections, potential_connections))
 while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
     random_edge = random.sample(potential_connections.edges, 1)[0]
     initial_connections.add_edge(random_edge[0], random_edge[1])
-# print('after',get_mean_degree_ratio(initial_connections, potential_connections))
+print('after',get_mean_degree_fraction(initial_connections, potential_connections))
+
+print("\ninitial again", initial_connections)
 
 pos = {}
 for hexa in hex_array:
@@ -187,9 +192,20 @@ for hexa in hex_array:
     pos[hexa] = [center.x, center.y]
 
 store_cell_connections = []
-for t in range(store_timepoint_N):
-    store_cell_connections.append(initial_connections)
+# store_cell_connections.append(initial_connections)
+for t in range(10):
+    new_copy = deepcopy(initial_connections)
+    store_cell_connections.append(new_copy)
     # store_cell_connections.append(potential_connections)
+    
+plot_initial_graph(store_cell_connections[0], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(0))
+
+for t in range(1, 10):
+    possible_new_connections = nx.difference(potential_connections, store_cell_connections[t-1])
+    random_edge = random.sample(possible_new_connections.edges, 1)[0]
+    store_cell_connections[t].add_edge(random_edge[0], random_edge[1])
+    print("store[" + str(t) + ']', store_cell_connections[t])
+    plot_initial_graph(store_cell_connections[t], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(t))
     
 # print(len(store_cell_connections))
 # print(len(store_cell_connections[0]))
@@ -290,8 +306,8 @@ chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
 # plt.show()
 
 # animate_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections')
-plot_initial_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_initial')
-demo_connections(connection_params, pointy)
+plot_initial_graph(store_cell_connections[0], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(0))
+# demo_connections(connection_params, pointy)
 
 anim_time = time.time()
 print('Time animating', anim_time - link_time)

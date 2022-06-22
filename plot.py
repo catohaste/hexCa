@@ -455,11 +455,11 @@ def plot_links(links, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, 
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=True)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
         
-def plot_initial_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
+def plot_initial_graph(connections_at_one_t, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
         
     pointy_radius = pointy_layout.size[0]
     
-    timepoint_N = len(connections_over_t)
+    # timepoint_N = len(connections_over_t)
 
     hex_centers = [hex_to_pixel(pointy_layout, hex) for hex in hexes]
 
@@ -476,7 +476,7 @@ def plot_initial_graph(connections_over_t, hexes, hex_grid_dim, pointy_layout, f
         
     set_axes_lims_from_hexes(ax, hexes, pointy_layout)
             
-    current_connections_graph = connections_over_t[0]
+    current_connections_graph = connections_at_one_t
     for edge in current_connections_graph.edges:
         
         point1 = hex_to_pixel(pointy_layout, edge[0])
