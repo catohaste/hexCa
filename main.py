@@ -1,3 +1,20 @@
+##################################################################################################
+"""
+Potential issues
+What happens if all connections are made?
+How do I keep connections static?
+Can I pickle initial connections, and birth and death connections?
+    Cannot currently pickle lib.Hex class
+What if I want to make more than one connection at each time point?
+
+
+Tasks
+Animate connections
+Include connections in politi model
+Make politi model use SDEs
+
+"""
+##################################################################################################
 import sys
 from os import mkdir, path
 import random
@@ -139,13 +156,14 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 """ SET CONNECTIONS """
 
 # connection params
-neighbour_dist_limit = 2 # how far away can I connect
-init_avg_degree_fraction = 0.25 # average fraction of potential connections
+neighbour_dist_limit = 1 # how far away can I connect
+init_avg_degree_fraction = 0.5 # average fraction of potential connections
 boundary_conditions = 'no-flux' # flux or no-flux
 
 # both values should be a multiple of store_dt and less than t_endpoint
-birth_connect_dt = 10 # connection birth rate
-death_connect_dt = 20 # connection death rate
+constant_connections = False
+birth_connect_dt = 2 # connection birth rate
+death_connect_dt = t_endpoint # connection death rate
 
 connection_params = {
     'dist_limit': neighbour_dist_limit,
@@ -175,31 +193,51 @@ while get_mean_degree_fraction(initial_connections, potential_connections) < ini
     random_edge = random.sample(potential_connections.edges, 1)[0]
     initial_connections.add_edge(random_edge[0], random_edge[1])
 print('after',get_mean_degree_fraction(initial_connections, potential_connections))
-print("\ninitial", initial_connections)
+# print("\ninitial", initial_connections)
 
 """birth and death"""
 birth_connections = {}
 death_connections = {}
 
-for t in store_t:
-    possible_birth_connections = nx.difference(potential_connections, store_cell_connections[t-1])
+# allocate
+birth_t = range(birth_connect_dt, t_endpoint, birth_connect_dt)
+for t in birth_t:
+    birth_connections[t] = []
+death_t = range(death_connect_dt, t_endpoint, death_connect_dt)
+for t in death_t:
+    death_connections[t] = []
     
+# set up connections
+birth_and_death_t = list(set(list(birth_t) + list(death_t)))
+birth_and_death_t.sort()
+for current_t in birth_and_death_t:
+    current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
+    if current_t in birth_t:
+        possible_birth_connections = nx.difference(potential_connections, current_connections)
+        random_edge = random.sample(possible_birth_connections.edges, 1)[0]
+        birth_connections[current_t].append(random_edge)
+    if current_t in death_t:
+        random_edge = random.sample(current_connections.edges, 1)[0]
+        death_connections[current_t].append(random_edge)
+        
+# print(initial_connections.edges())
+# print(birth_connections)
+# print(death_connections)
+#
+# # beginning connections
+plot_initial_graph(initial_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_start')
 
-store_cell_connections = []
-# store_cell_connections.append(initial_connections)
-for t in range(10):
-    new_copy = deepcopy(initial_connections)
-    store_cell_connections.append(new_copy)
-    # store_cell_connections.append(potential_connections)
+# end connections
+if constant_connections:
+    end_connections = initial_connections
+else:
+    end_connect_timepoint = max(birth_and_death_t)
+    end_connections = get_current_connections(end_connect_timepoint, initial_connections, birth_connections, death_connections)
     
-plot_initial_graph(store_cell_connections[0], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(0))
+plot_initial_graph(end_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_end')
 
-for t in range(1, 10):
-    possible_new_connections = nx.difference(potential_connections, store_cell_connections[t-1])
-    random_edge = random.sample(possible_new_connections.edges, 1)[0]
-    store_cell_connections[t].add_edge(random_edge[0], random_edge[1])
-    print("store[" + str(t) + ']', store_cell_connections[t])
-    plot_initial_graph(store_cell_connections[t], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(t))
+print('initial', initial_connections)
+print('end', end_connections)
 
 # print(len(store_cell_connections))
 # print(len(store_cell_connections[0]))
@@ -224,21 +262,39 @@ print('Time solving', solv_time - start)
 ##################################################################################################
 """ PICKLE """
 
-pickle_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,]
-pickle_var_strings = ['Ca_cyt', 'ip3', 'Ca_stored', 'ip3R_act']
-
 pickle_dir = save_dir + "pickles/"
 if not path.isdir(pickle_dir):
     mkdir(pickle_dir)
+
+time_params = {
+    "endpoint": t_endpoint,
+    'dt': dt,
+    'store_dt': store_dt,
+    'birth_connect_dt': birth_connect_dt,
+    'death_connect_dt': death_connect_dt
+}
+with open(pickle_dir + 'time_params.pickle', 'wb') as handle:
+    pickle.dump(time_params, handle)
+pickle_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,]
+pickle_var_strings = ['Ca_cyt', 'ip3', 'Ca_stored', 'ip3R_act']
+
 for var, var_str in zip(pickle_vars, pickle_var_strings):
     value_loc_tuple = create_val_loc_tuple_std_layout(var, hex_array, pointy)
     with open(pickle_dir + var_str + '.pickle', 'wb') as handle:
         pickle.dump(value_loc_tuple, handle)
+        
 with open(pickle_dir + 'layout_dict.pickle', 'wb') as handle:
     pickle.dump(layout_dict, handle)
 hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]
 with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
     pickle.dump(hex_tuples, handle)
+    
+# pickle_connects = [initial_connections, birth_connections, death_connections,]
+# pickle_connects_strings = ['initial_connections', 'birth_connections', 'death_connections',]
+# for connect, connect_str in zip(pickle_connects, pickle_connects_strings):
+#     print(connect_str)
+#     with open(pickle_dir + connect_str + '.pickle', 'wb') as handle:
+#         pickle.dump(connect, handle)
 
 pickling_time = time.time()
 print('Time pickling', pickling_time - solv_time)
@@ -300,7 +356,7 @@ chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
 # plt.show()
 
 # animate_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections')
-plot_initial_graph(store_cell_connections[0], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(0))
+# plot_initial_graph(store_cell_connections[0], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(0))
 # demo_connections(connection_params, pointy)
 
 anim_time = time.time()

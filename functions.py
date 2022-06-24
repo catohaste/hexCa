@@ -312,7 +312,6 @@ def get_mean_degree_fraction(connections, potential_connections):
 def get_current_connections(current_t, initial_connections, birth_connections, death_connections):
     
     current_connections = deepcopy(initial_connections)
-    store_t_to_current_t = range(0, current_t + store_dt, store_dt)
     
     current_t_list = []
     for t in birth_connections:
@@ -323,7 +322,6 @@ def get_current_connections(current_t, initial_connections, birth_connections, d
             current_t_list.append(t)
             
     current_t_list.sort()
-        
     for t in current_t_list:
         try:
             new_edges = birth_connections[t]
