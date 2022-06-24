@@ -309,4 +309,34 @@ def get_mean_degree_fraction(connections, potential_connections):
     
     return mean_degree_ratio
         
+def get_current_connections(current_t, initial_connections, birth_connections, death_connections):
+    
+    current_connections = deepcopy(initial_connections)
+    store_t_to_current_t = range(0, current_t + store_dt, store_dt)
+    
+    current_t_list = []
+    for t in birth_connections:
+        if t < current_t:
+            current_t_list.append(t)
+    for t in death_connections:
+        if t < current_t and t not in current_t_list:
+            current_t_list.append(t)
+            
+    current_t_list.sort()
+        
+    for t in current_t_list:
+        try:
+            new_edges = birth_connections[t]
+        except KeyError:
+            new_edges = []
+        try:
+            remove_edges = death_connections[t]
+        except KeyError:
+            remove_edges = []
+        for new_edge in new_edges:
+            current_connections.add_edge(new_edge[0], new_edge[1])
+        for remove_edge in remove_edges:
+            current_connections.remove_edge(remove_edge[0], remove_edge[1])
+        
+    return current_connections
     
