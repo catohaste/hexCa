@@ -154,6 +154,8 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 
 ##################################################################################################
 """ SET CONNECTIONS """
+""" Connections are an INPUT """
+""" A connection between cells allows IP3 to travel between these cells. See connection demo. """
 
 # connection params
 neighbour_dist_limit = 1 # how far away can I connect
@@ -163,7 +165,7 @@ boundary_conditions = 'no-flux' # flux or no-flux
 # both values should be a multiple of store_dt and less than t_endpoint
 constant_connections = False
 birth_connect_dt = 2 # connection birth rate
-death_connect_dt = t_endpoint # connection death rate
+death_connect_dt = 4 # connection death rate
 
 connection_params = {
     'dist_limit': neighbour_dist_limit,
@@ -182,50 +184,54 @@ for hexa in hex_array:
 
 potential_deg = list(dict(potential_connections.degree()).values())
 # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
-print("\npotential", potential_connections)
+print("potential", potential_connections)
 
-"""initial"""       
-initial_connections = nx.Graph()
-initial_connections.add_nodes_from(hex_array)
+"""initial"""
+if init_avg_degree_fraction == 1:
+    initial_connections = potential_connections
+else:
+    initial_connections = nx.Graph()
+    initial_connections.add_nodes_from(hex_array)
 
-print('before', get_mean_degree_fraction(initial_connections, potential_connections))
-while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
-    random_edge = random.sample(potential_connections.edges, 1)[0]
-    initial_connections.add_edge(random_edge[0], random_edge[1])
-print('after',get_mean_degree_fraction(initial_connections, potential_connections))
-# print("\ninitial", initial_connections)
+    print('before', get_mean_degree_fraction(initial_connections, potential_connections))
+    while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
+        remaining_possible_connections = nx.difference(potential_connections, initial_connections)
+        random_edge = random.sample(list(remaining_possible_connections.edges), 1)[0]
+        initial_connections.add_edge(random_edge[0], random_edge[1])
+    print('after',get_mean_degree_fraction(initial_connections, potential_connections))
 
-"""birth and death"""
-birth_connections = {}
-death_connections = {}
 
-# allocate
-birth_t = range(birth_connect_dt, t_endpoint, birth_connect_dt)
-for t in birth_t:
-    birth_connections[t] = []
-death_t = range(death_connect_dt, t_endpoint, death_connect_dt)
-for t in death_t:
-    death_connections[t] = []
+    """birth and death"""
+    birth_connections = {}
+    death_connections = {}
+
+    # allocate
+    birth_t = range(birth_connect_dt, t_endpoint, birth_connect_dt)
+    for t in birth_t:
+        birth_connections[t] = []
+    death_t = range(death_connect_dt, t_endpoint, death_connect_dt)
+    for t in death_t:
+        death_connections[t] = []
     
-# set up connections
-birth_and_death_t = list(set(list(birth_t) + list(death_t)))
-birth_and_death_t.sort()
-for current_t in birth_and_death_t:
-    current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
-    if current_t in birth_t:
-        possible_birth_connections = nx.difference(potential_connections, current_connections)
-        random_edge = random.sample(possible_birth_connections.edges, 1)[0]
-        birth_connections[current_t].append(random_edge)
-    if current_t in death_t:
-        random_edge = random.sample(current_connections.edges, 1)[0]
-        death_connections[current_t].append(random_edge)
+    # set up connections
+    birth_and_death_t = list(set(list(birth_t) + list(death_t)))
+    birth_and_death_t.sort()
+    for current_t in birth_and_death_t:
+        current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
+        if current_t in birth_t:
+            possible_birth_connections = nx.difference(potential_connections, current_connections)
+            random_edge = random.sample(list(possible_birth_connections.edges), 1)[0]
+            birth_connections[current_t].append(random_edge)
+        if current_t in death_t:
+            random_edge = random.sample(list(current_connections.edges), 1)[0]
+            death_connections[current_t].append(random_edge)
         
 # print(initial_connections.edges())
 # print(birth_connections)
 # print(death_connections)
-#
-# # beginning connections
-plot_initial_graph(initial_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_start')
+
+# beginning connections
+plot_graph_fixed_time(initial_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Blues", save_dir + 'connections_start')
 
 # end connections
 if constant_connections:
@@ -234,10 +240,14 @@ else:
     end_connect_timepoint = max(birth_and_death_t)
     end_connections = get_current_connections(end_connect_timepoint, initial_connections, birth_connections, death_connections)
     
-plot_initial_graph(end_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_end')
+plot_graph_fixed_time(end_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Blues", save_dir + 'connections_end')
 
 print('initial', initial_connections)
 print('end', end_connections)
+
+
+# ANIMATE
+animate_connections(initial_connections, birth_connections, death_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Blues", save_dir + 'connections')
 
 # print(len(store_cell_connections))
 # print(len(store_cell_connections[0]))
@@ -301,6 +311,8 @@ print('Time pickling', pickling_time - solv_time)
 
 ##################################################################################################
 """ MAKE LINKS """
+""" Links are an OUTPUT """
+""" A link is created when neighbouring cells 'fire' (amplitude above threshold) within a given time interval. """
 
 # Ca_cyt_links = make_links(Ca_cyt_new, store_t)
 # ip3_links = make_links(ip3_new, store_t)
@@ -322,7 +334,7 @@ plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Blues', 'Oranges']
 
 # for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
-    # animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+#     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
 # plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']

@@ -455,7 +455,7 @@ def plot_links(links, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, 
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=True)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
         
-def plot_initial_graph(connections_at_one_t, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
+def plot_graph_fixed_time(connections_at_one_t, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str): 
         
     pointy_radius = pointy_layout.size[0]
     
@@ -497,6 +497,111 @@ def plot_initial_graph(connections_at_one_t, hexes, hex_grid_dim, pointy_layout,
     else:
         plt.savefig(file_str + '.png')
         
+def animate_connections(initial_connections, birth_connections, death_connections, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str):
+    
+    pointy_radius = pointy_layout.size[0]
+    
+    connection_timepoints = list(set(list(birth_connections) + list(death_connections) + [0]))
+    connection_timepoints.sort()
+    
+    timepoint_N = len(connection_timepoints)
+
+    hex_centers = [hex_to_pixel(pointy_layout, hex) for hex in hexes]
+
+    grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    ax = fig.add_subplot(111)
+    
+    var_cmap = plt.get_cmap(color_str)
+    
+    hex_patches = [RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(0.4), alpha=0.5, numVertices=6, radius=pointy_radius) for center in hex_centers]
+    # hex_patches = [RegularPolygon((center.x, center.y), facecolor='grey', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=np.pi/6) for center in hex_centers]
+    for patch in hex_patches:
+        ax.add_patch(patch)
+        
+    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+    
+    edge_line_dict = {}
+    
+    # add initial connections
+    for edge in initial_connections.edges:
+        
+        point1 = hex_to_pixel(pointy_layout, edge[0])
+        point2 = hex_to_pixel(pointy_layout, edge[1])
+        
+        x_coords = [point[0] for point in (point1,point2)]
+        y_coords = [point[1] for point in (point1,point2)]
+        
+        l, = ax.plot(x_coords, y_coords, color=var_cmap(0.95))
+        
+        edge_line_dict[edge] = l
+        lines = [edge_line_dict[edge] for edge in edge_line_dict]
+    
+    video_length = 30 # seconds
+    fps = 48
+    interval_from_fps = 1000/fps
+    frames_N = video_length * fps
+    sample_rate = int(np.floor(timepoint_N / frames_N))
+    if sample_rate == 0:
+        sample_rate = 1
+        frames_N = timepoint_N
+    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    
+    def animate(i):
+        
+        current_t = connection_timepoints[i]
+        
+        # add birth connections
+        try:
+            add_connections = birth_connections[current_t]
+            for connection in add_connections:
+                point1 = hex_to_pixel(pointy_layout, connection[0])
+                point2 = hex_to_pixel(pointy_layout, connection[1])
+        
+                x_coords = [point[0] for point in (point1,point2)]
+                y_coords = [point[1] for point in (point1,point2)]
+        
+                l, = ax.plot(x_coords, y_coords, color=var_cmap(0.95))
+        
+                edge_line_dict[connection] = l
+        except KeyError:
+            pass
+            
+        # remove death connections
+        try:
+            remove_connections = death_connections[current_t]
+            for connection in remove_connections:
+                remove_line = edge_line_dict[connection]
+                remove_line.remove()
+            
+                del edge_line_dict[connection]
+        except KeyError:
+            pass
+            
+        lines = [edge_line_dict[edge] for edge in edge_line_dict]
+        
+        return lines
+    
+    ax.set_aspect('equal')
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    plt.tight_layout()
+    
+    if file_str == 'show':
+        plt.show()
+    else:
+        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=True)
+        anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        
+        
+
+        
+    return
+    
+
+    
+    
+
 def demo_connections(connection_params, pointy_layout):
     """
     I need 4 plots for the demo, which can then be altered depending on the three parameters we are varying

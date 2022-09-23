@@ -4,7 +4,7 @@ import random
 from lib import *
 from functions import *
 
-def politi_reduced_connectivity(variables, connections_over_t, run_t, store_t, hex_array, params):
+def politi_reduced_connectivity(variables, run_t, store_t, hex_array, params):
     """
     variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
     """
@@ -64,8 +64,6 @@ def politi_reduced_connectivity(variables, connections_over_t, run_t, store_t, h
     store_dt = store_t[1] - store_t[0]
     time_scaling = int(store_dt / dt)
     
-    current_connection_graph = connections_over_t[0]
-    
     for t_idx, t in enumerate(run_t[1:]):
     
         for hexa in hex_array:
@@ -82,30 +80,18 @@ def politi_reduced_connectivity(variables, connections_over_t, run_t, store_t, h
         
             # only IP3 travels between cells
             # this calculates an ip3 neighborhood average with no-flux boundary conditions
-            if len(current_connection_graph.edges(hexa)) == 0:
-                
-                new_ip3[hexa] = old_ip3[hexa] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, old_Ca_cyt[hexa], 2) - ( old_ip3[hexa] * ( Hill(eta, K_3K, old_Ca_cyt[hexa], 2) + 1 - eta) ) ) )
-                
-            else:
-            
-                ip3_neighborhood_sum = 0
-                ip3_neighbor_counter = 0
-            
-                for edge in current_connection_graph.edges(hexa):
-                    if edge[0] == hexa:
-                        neighbor = edge[1]
-                    else:
-                        neighbor = edge[0]
-                    
+            ip3_neighborhood_sum = 0
+            ip3_neighbor_counter = 0
+            for direction in range(6):
+                neighbor = hex_neighbor(hexa, direction)
+                try:
                     ip3_neighborhood_sum += old_ip3[neighbor]
                     ip3_neighbor_counter += 1
-                    
-                if ip3_neighbor_counter != current_connection_graph.degree(hexa):
-                    print("Something has gone awry")
-                    
-                ip3_neighborhood_avg = ip3_neighborhood_sum / ip3_neighbor_counter
+                except KeyError:
+                    continue
+            ip3_neighborhood_avg = ip3_neighborhood_sum/ip3_neighbor_counter
         
-                new_ip3[hexa] = old_ip3[hexa] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, old_Ca_cyt[hexa], 2) - ( old_ip3[hexa] * ( Hill(eta, K_3K, old_Ca_cyt[hexa], 2) + 1 - eta) ) ) + D_IP3 * (ip3_neighborhood_avg - old_ip3[hexa]) )
+            new_ip3[hexa] = old_ip3[hexa] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, old_Ca_cyt[hexa], 2) - ( old_ip3[hexa] * ( Hill(eta, K_3K, old_Ca_cyt[hexa], 2) + 1 - eta) ) ) + D_IP3 * (ip3_neighborhood_avg - old_ip3[hexa]) )
             
             old_Ca_cyt[hexa] = new_Ca_cyt[hexa]
             old_ip3[hexa] = new_ip3[hexa]
@@ -113,11 +99,6 @@ def politi_reduced_connectivity(variables, connections_over_t, run_t, store_t, h
             old_ip3R_act[hexa] = new_ip3R_act[hexa]
             
             if t in store_t:
-                
-                t_idx = store_t.tolist().index(t)
-                
-                current_connection_graph = connections_over_t[t_idx]
-                
                 store_t_idx = int((t_idx+1) / time_scaling)
                 
                 Ca_cyt[hexa][store_t_idx] = new_Ca_cyt[hexa]
