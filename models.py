@@ -4,7 +4,7 @@ import random
 from lib import *
 from functions import *
 
-def politi_reduced_connectivity(variables, run_t, store_t, hex_array, params):
+def politi_reduced_connectivity(variables, run_t, store_t, hex_array, initial_connections, birth_connections, death_connections, params):
     """
     variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
     """
@@ -64,7 +64,14 @@ def politi_reduced_connectivity(variables, run_t, store_t, hex_array, params):
     store_dt = store_t[1] - store_t[0]
     time_scaling = int(store_dt / dt)
     
+    birth_and_death_t = list(set(list(birth_connections) + list(death_connections)))
+    birth_and_death_t.sort()
+    current_connections = initial_connections
+    
     for t_idx, t in enumerate(run_t[1:]):
+        
+        if t in birth_and_death_t:
+            current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
     
         for hexa in hex_array:
         
@@ -80,16 +87,17 @@ def politi_reduced_connectivity(variables, run_t, store_t, hex_array, params):
         
             # only IP3 travels between cells
             # this calculates an ip3 neighborhood average with no-flux boundary conditions
-            ip3_neighborhood_sum = 0
-            ip3_neighbor_counter = 0
-            for direction in range(6):
-                neighbor = hex_neighbor(hexa, direction)
-                try:
+            current_edges = current_connections.edges(hexa)
+            neighbors = current_connections.neighbors(hexa)
+            
+            if len(current_edges) == 0:
+                ip3_neighborhood_avg = 0
+            else:
+                ip3_neighborhood_sum = 0
+                ip3_neighbor_number = len(current_edges)                
+                for neighbor in neighbors:
                     ip3_neighborhood_sum += old_ip3[neighbor]
-                    ip3_neighbor_counter += 1
-                except KeyError:
-                    continue
-            ip3_neighborhood_avg = ip3_neighborhood_sum/ip3_neighbor_counter
+                ip3_neighborhood_avg = ip3_neighborhood_sum/ip3_neighbor_number
         
             new_ip3[hexa] = old_ip3[hexa] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, old_Ca_cyt[hexa], 2) - ( old_ip3[hexa] * ( Hill(eta, K_3K, old_Ca_cyt[hexa], 2) + 1 - eta) ) ) + D_IP3 * (ip3_neighborhood_avg - old_ip3[hexa]) )
             

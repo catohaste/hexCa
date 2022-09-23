@@ -163,9 +163,13 @@ init_avg_degree_fraction = 0.5 # average fraction of potential connections
 boundary_conditions = 'no-flux' # flux or no-flux
 
 # both values should be a multiple of store_dt and less than t_endpoint
-constant_connections = False
-birth_connect_dt = 2 # connection birth rate
-death_connect_dt = 4 # connection death rate
+constant_connections = True
+birth_connect_dt = t_endpoint # connection birth rate
+death_connect_dt = t_endpoint # connection death rate
+
+# constant_connections = False
+# birth_connect_dt = 2 # connection birth rate: new connection every x timesteps
+# death_connect_dt = 4 # connection death rate: lose connection every x timesteps
 
 connection_params = {
     'dist_limit': neighbour_dist_limit,
@@ -263,7 +267,7 @@ start = time.time()
 
 Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
 # Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, hex_array, params)
-# Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(variables, store_cell_connections, run_t, store_t, hex_array, params)
+Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(variables, run_t, store_t, hex_array, initial_connections, birth_connections, death_connections, params)
 
 solv_time = time.time()
 
@@ -333,8 +337,8 @@ plot_vars = [Ca_cyt_new, ip3_new]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Blues', 'Oranges']
 
-# for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
-#     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
+    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
 
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
 # plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
@@ -348,7 +352,8 @@ new_variables = Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,
 all_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
 all_color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']
 
-chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
+# chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
+# chosen_cells = [(0,0)]
 # plot_hexes_highlight_cells(chosen_cells, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir)
 # plot_all_vars_over_time_single_cells(chosen_cells, new_variables, all_var_strings, all_color_strings, save_dir)
 #
@@ -359,15 +364,6 @@ chosen_cells = [(4,4), (12,4), (20,4), (28,4), (36,4)]
 #     plot_links(link_var, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + "_links" )
 #     plot_var_running_time_avg_single_cells(chosen_cells, 400, var, var_str, color_str, save_dir + var_str)
 
-# draw network
-# nx.draw_networkx_edges(potential_connections, pos)
-# plt.show()
-
-# nx.draw_networkx_edges(potential_connections, pos, edge_color='k')
-# nx.draw_networkx_edges(initial_connections, pos, edge_color='k')
-# plt.show()
-
-# animate_graph(store_cell_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections')
 # plot_initial_graph(store_cell_connections[0], hex_array, (hex_x_N,hex_y_N), pointy, 12, "Oranges", save_dir + 'connections_' + str(0))
 # demo_connections(connection_params, pointy)
 

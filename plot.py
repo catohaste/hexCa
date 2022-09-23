@@ -300,6 +300,7 @@ def plot_hexes_highlight_cells(cell_locs, hexes, hex_grid_dim, pointy_layout, fi
     for cell_loc in cell_locs:
         chosen_h = OffsetCoord(cell_loc[0], cell_loc[1])
         chosen_hexa = roffset_to_cube(-1, chosen_h)
+        # print(cell_loc, chosen_hexa)
         chosen_hex_center = hex_to_pixel(pointy_layout, chosen_hexa)
         chosen_patch = RegularPolygon((chosen_hex_center.x, chosen_hex_center.y), facecolor='C3', numVertices=6, radius=pointy_radius, edgecolor='k', orientation=0)
         ax.add_patch(chosen_patch)
@@ -592,16 +593,9 @@ def animate_connections(initial_connections, birth_connections, death_connection
     else:
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=True)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
-        
-        
-
-        
+                
     return
     
-
-    
-    
-
 def demo_connections(connection_params, pointy_layout):
     """
     I need 4 plots for the demo, which can then be altered depending on the three parameters we are varying
