@@ -44,7 +44,7 @@ if not path.isdir(results_dir):
 now = datetime.datetime.now()
 now_str = now.strftime("%Y-%m-%d_%H%M/")
 save_dir = results_dir + now_str
-save_dir = results_dir + 'dev/'
+# save_dir = results_dir + 'dev/'
 if not path.isdir(save_dir):
     mkdir(save_dir)
     
@@ -79,6 +79,8 @@ flat = create_layout_from_dict(flat_layout_dict)
 # set up hexagonal grid with (q,r,s) coordinates
 hex_x_N = 40
 hex_y_N = 6
+# hex_x_N = 50
+# hex_y_N = 50
 hex_array = []
 
 # set up POINTY hexagonal grid with (q,r,s) coordinates
@@ -122,7 +124,7 @@ store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
+# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
 
 # set cell-cell communication, 0 => OFF, standard 0.02
 params["D_IP3"] = 0.02
@@ -149,7 +151,7 @@ ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
 
 # set ICs less randomly from V_PLC 0.787 df
 # these conditions were selected randomly but now are the same for every run
-less_random_ICs_df = pd.read_csv("not_random_ICs.csv", delimiter=',', header=0, index_col=0)
+less_random_ICs_df = pd.read_csv("not_random_ICs_40_6.csv", delimiter=',', header=0, index_col=0)
 variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
 
 ##################################################################################################
@@ -159,7 +161,7 @@ variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, varia
 
 # connection params
 neighbour_dist_limit = 1 # how far away can I connect
-init_avg_degree_fraction = 0.5 # average fraction of potential connections
+init_avg_degree_fraction = 1 # average fraction of potential connections
 boundary_conditions = 'no-flux' # flux or no-flux
 
 # both values should be a multiple of store_dt and less than t_endpoint
@@ -193,6 +195,8 @@ print("potential", potential_connections)
 """initial"""
 if init_avg_degree_fraction == 1:
     initial_connections = potential_connections
+    birth_connections = {}
+    death_connections = {}
 else:
     initial_connections = nx.Graph()
     initial_connections.add_nodes_from(hex_array)
@@ -394,7 +398,7 @@ print('Time animating', anim_time - link_time)
 #     new_dict = dict(zip(new_col_names, new_row_values))
 #     not_random_ICs_df = not_random_ICs_df.append(new_dict, ignore_index=True)
 #
-# not_random_ICs_df.to_csv('not_random_ICs.csv')
+# not_random_ICs_df.to_csv('not_random_ICs_50_50.csv')
 
 total_time = time.time()
 print('Total time', total_time - start)
