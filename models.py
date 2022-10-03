@@ -71,7 +71,7 @@ def politi_reduced_connectivity(variables, run_t, store_t, hex_array, initial_co
     for t_idx, t in enumerate(run_t[1:]):
         
         if t in birth_and_death_t:
-            current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
+            current_connections = get_current_connections(t, initial_connections, birth_connections, death_connections)
     
         for hexa in hex_array:
         
@@ -90,16 +90,28 @@ def politi_reduced_connectivity(variables, run_t, store_t, hex_array, initial_co
             current_edges = current_connections.edges(hexa)
             neighbors = current_connections.neighbors(hexa)
             
-            if len(current_edges) == 0:
-                ip3_neighborhood_avg = 0
+            if len(current_edges) == 0: # if no connected neighbours
+                incoming = 0
+                
+                # option 1, the logical, sensible option
+                # outgoing = 0
+                
+                # option 2
+                # well, I fucked up
+                # here if a cell has no connections, it still loses IP3 to its 'neighbours' without gaining anything in return
+                # ironically, this actually seems to work pretty well
+                outgoing = old_ip3[hexa]
             else:
                 ip3_neighborhood_sum = 0
                 ip3_neighbor_number = len(current_edges)                
                 for neighbor in neighbors:
                     ip3_neighborhood_sum += old_ip3[neighbor]
                 ip3_neighborhood_avg = ip3_neighborhood_sum/ip3_neighbor_number
-        
-            new_ip3[hexa] = old_ip3[hexa] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, old_Ca_cyt[hexa], 2) - ( old_ip3[hexa] * ( Hill(eta, K_3K, old_Ca_cyt[hexa], 2) + 1 - eta) ) ) + D_IP3 * (ip3_neighborhood_avg - old_ip3[hexa]) )
+                
+                incoming = ip3_neighborhood_avg
+                outgoing = old_ip3[hexa]
+            
+            new_ip3[hexa] = old_ip3[hexa] + dt * ( (1 / tau_p) * (Hill(V_PLC_scaled[hexa], K_PLC, old_Ca_cyt[hexa], 2) - ( old_ip3[hexa] * ( Hill(eta, K_3K, old_Ca_cyt[hexa], 2) + 1 - eta) ) ) + D_IP3 * (incoming - outgoing) )
             
             old_Ca_cyt[hexa] = new_Ca_cyt[hexa]
             old_ip3[hexa] = new_ip3[hexa]

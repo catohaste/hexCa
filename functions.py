@@ -121,7 +121,7 @@ def initialize_var_dict_to_x_gradient(var_dict, hex_array, value_range, pointy_l
     for hexa in hex_array:
         current_x = centers[hexa][0]
         x_idx = x_cols.index(current_x)
-        var_dict[hexa][0] = x_vals[x_idx]
+        var_dict[hexa] = x_vals[x_idx]
     
     return var_dict
     
