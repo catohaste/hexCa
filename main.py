@@ -125,6 +125,8 @@ store_timepoint_N = len(store_t)
 # initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
 # params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
+params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (0.787,1.1), pointy)
+# print(params["V_PLC"])
 
 # set cell-cell communication, 0 => OFF, standard 0.02
 params["D_IP3"] = 0.02
