@@ -59,6 +59,15 @@ stripes = {
     'purple': [],
 }
 
+stripes = {
+    'black': [],
+    'brown': [],
+    'red': [],
+    'orange': [],
+    'yellow': [],
+    'green': []
+}
+
 # symmetric
 stripe_offset = 0
 for stripe in stripes:
@@ -100,112 +109,219 @@ run_timepoint_N = len(run_t)
 store_timepoint_N = len(store_t)
 
 ##################################################################################################
+# allocate all stripes
+
+stripes_var = {}
+
+##################################################################################################
 
 # constant (draw hexagons)
-black_var = allocate_var_dict(stripes['black'], store_timepoint_N, 0.8)
+if 'black' in stripes:
+    black_var = allocate_var_dict(stripes['black'], store_timepoint_N, 0.8)
+    
+    stripes_var['black'] = black_var
+    print("Done BLACK")
 
 # constant random (colour hexagons)
-brown_var = allocate_var_dict(stripes['brown'], store_timepoint_N, 0.6)
-brown_var = set_var_dict_to_random_val_in_range_all_t(brown_var, [0,1])
+if 'brown' in stripes:
+    brown_var = allocate_var_dict(stripes['brown'], store_timepoint_N, 0.6)
+    brown_var = set_var_dict_to_random_val_in_range_all_t(brown_var, [0,1])
+    
+    stripes_var['brown'] = brown_var
+    print("Done BROWN")
 
 # random flashing (animate hexagons)
-red_var = allocate_var_dict(stripes['red'], store_timepoint_N, 0.6)
-red_var = initialize_var_dict_to_random_val_in_range(red_var, [0,1])
-red_var = random_pulsing(red_var, stripes['red'], store_timepoint_N, (0,1))
+if 'red' in stripes:
+    red_var = allocate_var_dict(stripes['red'], store_timepoint_N, 0.6)
+    red_var = initialize_var_dict_to_random_val_in_range(red_var, [0,1])
+    red_var = random_pulsing(red_var, stripes['red'], store_timepoint_N, (0,1))
+    
+    stripes_var['red'] = red_var
+    print("Done RED")
 
 # diffusion (something meaningful)
-orange_var = allocate_var_dict(stripes['orange'], store_timepoint_N, 0)
-orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0, 3, pointy)
-orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.2, 3, pointy)
-orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.4, 3, pointy)
-orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.6, 3, pointy)
-orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.8, 3, pointy)
-orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 1, 3, pointy)
-orange_var = diffusion(orange_var, stripes['orange'], store_timepoint_N)
+if 'orange' in stripes:
+    orange_var = allocate_var_dict(stripes['orange'], store_timepoint_N, 0)
+    orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0, 3, pointy)
+    orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.2, 3, pointy)
+    orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.4, 3, pointy)
+    orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.6, 3, pointy)
+    orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 0.8, 3, pointy)
+    orange_var = initialize_column_of_hexes_to_value(orange_var, stripes['orange'], 1, 1, 3, pointy)
+    orange_var = diffusion(orange_var, stripes['orange'], store_timepoint_N)
+    
+    stripes_var['orange'] = orange_var
+    print("Done ORANGE")
 
 ##################################################################################################
 """ YELLOW """
 # calcium no diffusion (more meaningful)
+if 'yellow' in stripes:
+    
+    # initialize V_PLC, different value in each hex
+    params["V_PLC"] = allocate_var_dict(stripes['yellow'], 1, 0.787)
 
-# initialize V_PLC, different value in each hex
-params["V_PLC"] = allocate_var_dict(stripes['yellow'], 1, 0.787)
+    # set cell-cell communication, 0 => OFF, standard 0.02
+    params["D_IP3"] = 0
 
-# set cell-cell communication, 0 => OFF, standard 0.02
-params["D_IP3"] = 0
+    # allocation initial conditions for variables
+    Ca_cyt_0 = 2
+    Ca_cyt = allocate_var_dict(stripes['yellow'], store_timepoint_N, Ca_cyt_0)
+    Ca_stored = allocate_var_dict(stripes['yellow'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+    ip3 = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.2)
+    ip3R_act = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.6)
 
-# allocation initial conditions for variables
-Ca_cyt_0 = 2
-Ca_cyt = allocate_var_dict(stripes['yellow'], store_timepoint_N, Ca_cyt_0)
-Ca_stored = allocate_var_dict(stripes['yellow'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
-ip3 = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.2)
-ip3R_act = allocate_var_dict(stripes['yellow'], store_timepoint_N, 0.6)
+    variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
-variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+    # set ICs randomly from V_PLC 0.787 df
+    ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
+    variables = initialize_var_dict_to_x_gradient_from_ICs_df(ICs_df, variables, stripes['yellow'], pointy)
 
-# set ICs randomly from V_PLC 0.787 df
-ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
-variables = initialize_var_dict_to_x_gradient_from_ICs_df(ICs_df, variables, stripes['yellow'], pointy)
+    Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
+    Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['yellow'], params)
 
-Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
-Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['yellow'], params)
-
-yellow_var = Ca_cyt_new
+    yellow_var = Ca_cyt_new
+    
+    stripes_var['yellow'] = yellow_var
+    print("Done YELLOW")
 
 ##################################################################################################
 """ GREEN """
 # calcium with diffusion (turing pattern)
+if 'green' in stripes:
 
-# initialize V_PLC, different value in each hex
-params["V_PLC"] = allocate_var_dict(stripes['green'], 1, 0.787)
+    # initialize V_PLC, same value in each hex
+    params["V_PLC"] = allocate_var_dict(stripes['green'], 1, 0.787)
 
-# set cell-cell communication, 0 => OFF, standard 0.02
-params["D_IP3"] = 0.02
+    # set cell-cell communication, 0 => OFF, standard 0.02
+    params["D_IP3"] = 0.02
 
-# allocation initial conditions for variables
-Ca_cyt_0 = 2
-Ca_cyt = allocate_var_dict(stripes['green'], store_timepoint_N, Ca_cyt_0)
-Ca_stored = allocate_var_dict(stripes['green'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
-ip3 = allocate_var_dict(stripes['green'], store_timepoint_N, 0.2)
-ip3R_act = allocate_var_dict(stripes['green'], store_timepoint_N, 0.6)
+    # allocation initial conditions for variables
+    Ca_cyt_0 = 2
+    Ca_cyt = allocate_var_dict(stripes['green'], store_timepoint_N, Ca_cyt_0)
+    Ca_stored = allocate_var_dict(stripes['green'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+    ip3 = allocate_var_dict(stripes['green'], store_timepoint_N, 0.2)
+    ip3R_act = allocate_var_dict(stripes['green'], store_timepoint_N, 0.6)
 
-variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+    variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
-# set ICs randomly from V_PLC 0.787 df
-ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
-variables = set_initial_conditions_from_df(ICs_df, variables)
+    # set ICs randomly from V_PLC 0.787 df
+    ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
+    variables = set_initial_conditions_from_df(ICs_df, variables)
 
-Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
-Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['green'], params)
+    Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
+    Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['green'], params)
 
-green_var = Ca_cyt_new
+    green_var = Ca_cyt_new
+    
+    stripes_var['green'] = green_var
+    print("Done GREEN")
 
 ##################################################################################################
+""" BLUE """
+# animated reduced connectivity
+if 'blue' in stripes:
+    
+    blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.6)
+    
+    # connection params
+    neighbour_dist_limit = 1 # how far away can I connect
+    init_avg_degree_fraction = 1 # average fraction of potential connections
+    boundary_conditions = 'no-flux' # flux or no-flux
 
-# ??? BCS
-blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.6)
-blue_var = set_var_dict_to_random_val_in_range_all_t(blue_var, [0,1])
+    # both values should be a multiple of store_dt and less than t_endpoint
+    constant_connections = False
+    birth_connect_dt = 2 # connection birth rate: new connection every x timesteps
+    death_connect_dt = 4 # connection death rate: lose connection every x timesteps
 
-# ??? connections
-purple_var = allocate_var_dict(stripes['purple'], store_timepoint_N, 0.6)
-purple_var = set_var_dict_to_random_val_in_range_all_t(purple_var, [0,1])
+    connection_params = {
+        'dist_limit': neighbour_dist_limit,
+        'init_avg_degree_fraction': init_avg_degree_fraction,
+        'boundary_conditions': boundary_conditions
+    }
+
+    """potential"""
+    potential_connections = nx.Graph()
+    potential_connections.add_nodes_from(hex_array)
+    for hexa in hex_array:
+        neighbors = hex_neighbors_cumulative_distance(hexa, neighbour_dist_limit)
+        for neighbor in neighbors:
+            if neighbor in hex_array:
+                potential_connections.add_edge(hexa, neighbor)
+
+    potential_deg = list(dict(potential_connections.degree()).values())
+    # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
+    print("potential", potential_connections)
+
+    """initial"""
+    if init_avg_degree_fraction == 1:
+        initial_connections = potential_connections
+        birth_connections = {}
+        death_connections = {}
+    else:
+        initial_connections = nx.Graph()
+        initial_connections.add_nodes_from(hex_array)
+
+        print('before', get_mean_degree_fraction(initial_connections, potential_connections))
+        while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
+            remaining_possible_connections = nx.difference(potential_connections, initial_connections)
+            random_edge = random.sample(list(remaining_possible_connections.edges), 1)[0]
+            initial_connections.add_edge(random_edge[0], random_edge[1])
+        print('after',get_mean_degree_fraction(initial_connections, potential_connections))
+
+
+        """birth and death"""
+        birth_connections = {}
+        death_connections = {}
+
+        # allocate
+        birth_t = range(birth_connect_dt, t_endpoint, birth_connect_dt)
+        for t in birth_t:
+            birth_connections[t] = []
+        death_t = range(death_connect_dt, t_endpoint, death_connect_dt)
+        for t in death_t:
+            death_connections[t] = []
+    
+        # set up connections
+        birth_and_death_t = list(set(list(birth_t) + list(death_t)))
+        birth_and_death_t.sort()
+        for current_t in birth_and_death_t:
+            current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
+            if current_t in birth_t:
+                possible_birth_connections = nx.difference(potential_connections, current_connections)
+                random_edge = random.sample(list(possible_birth_connections.edges), 1)[0]
+                birth_connections[current_t].append(random_edge)
+            if current_t in death_t:
+                random_edge = random.sample(list(current_connections.edges), 1)[0]
+                death_connections[current_t].append(random_edge)
+    
+    stripes_var['blue'] = blue_var
+    print("Done BLUE")
+
+
+##################################################################################################
+""" PURPLE """
+# ????????
+
+if 'purple' in stripes:
+
+    purple_var = allocate_var_dict(stripes['purple'], store_timepoint_N, 0.6)
+    purple_var = set_var_dict_to_random_val_in_range_all_t(purple_var, [0,1])
+    
+    stripes_var['purple'] = purple_var
+    print("Done PURPLE")
 
 ##################################################################################################
 """ PLOT """
 
-stripes_var = {
-    'black': black_var,
-    'brown': brown_var,
-    'red': red_var,
-    'orange': orange_var,
-    'yellow': yellow_var,
-    'green': green_var,
-    'blue': blue_var,
-    'purple': purple_var,
-}
+flag_colours = ''
+for stripe in stripes:
+    flag_colours = flag_colours + '_' + stripe
+flag_name = 'flag' + flag_colours
+    
+plot_var_flag(stripes_var, 150, stripes, (hex_x_N, hex_y_N), pointy, 12, save_dir + flag_name + '_initial')
 
-plot_var_flag(stripes_var, 150, stripes, (hex_x_N, hex_y_N), pointy, 12, save_dir + 'flag' + '_initial')
-
-animate_var_flag(stripes_var, store_timepoint_N, stripes, (hex_x_N,hex_y_N), pointy, 12, save_dir + 'flag')
+animate_var_flag(stripes_var, store_timepoint_N, stripes, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
 
 ##################################################################################################
 # """ SET INITIAL CONDITIONS """
