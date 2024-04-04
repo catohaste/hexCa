@@ -68,9 +68,9 @@ stripes = {
     'green': []
 }
 
-stripes = {
-    'green': []
-}
+# stripes = {
+#     'green': []
+# }
 
 # symmetric
 stripe_offset = 0

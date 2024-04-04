@@ -195,10 +195,10 @@ def set_initial_conditions_from_df(df, variables):
     
     for hexa in Ca_cyt:
         row = df.sample(1)
-        Ca_cyt[hexa][0] = row['Ca_cyt']
-        ip3[hexa][0] = row['IP3']
-        Ca_stored[hexa][0] = row['Ca_stored']
-        ip3R_act[hexa][0] = row['IP3R_act']
+        Ca_cyt[hexa][0] = row['Ca_cyt'].iloc[0]
+        ip3[hexa][0] = row['IP3'].iloc[0]
+        Ca_stored[hexa][0] = row['Ca_stored'].iloc[0]
+        ip3R_act[hexa][0] = row['IP3R_act'].iloc[0]
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
     
@@ -211,10 +211,10 @@ def set_initial_conditions_from_df_less_random(df, variables):
     for index, row in df.iterrows():
         # print(row['q'], row['r'],row['s'])
         hexa = Hex(row['q'],row['r'],row['s'] )
-        Ca_cyt[hexa][0] = row['Ca_cyt']
-        ip3[hexa][0] = row['IP3']
-        Ca_stored[hexa][0] = row['Ca_stored']
-        ip3R_act[hexa][0] = row['IP3R_act']
+        Ca_cyt[hexa][0] = row['Ca_cyt'].iloc[0]
+        ip3[hexa][0] = row['IP3'].iloc[0]
+        Ca_stored[hexa][0] = row['Ca_stored'].iloc[0]
+        ip3R_act[hexa][0] = row['IP3R_act'].iloc[0]
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
   
@@ -223,11 +223,12 @@ def set_constant_initial_conditions_from_df_first_row(df, variables):
     Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
     
     row = df.iloc[[0]]
+    
     for hexa in Ca_cyt:
-        Ca_cyt[hexa][0] = row['Ca_cyt']
-        ip3[hexa][0] = row['IP3']
-        Ca_stored[hexa][0] = row['Ca_stored']
-        ip3R_act[hexa][0] = row['IP3R_act']
+        Ca_cyt[hexa][0] = row['Ca_cyt'].iloc[0]
+        ip3[hexa][0] = row['IP3'].iloc[0]
+        Ca_stored[hexa][0] = row['Ca_stored'].iloc[0]
+        ip3R_act[hexa][0] = row['IP3R_act'].iloc[0]
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
       
