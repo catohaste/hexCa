@@ -217,7 +217,20 @@ def set_initial_conditions_from_df_less_random(df, variables):
         ip3R_act[hexa][0] = row['IP3R_act']
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
-        
+  
+def set_constant_initial_conditions_from_df_first_row(df, variables):
+    
+    Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
+    
+    row = df.iloc[[0]]
+    for hexa in Ca_cyt:
+        Ca_cyt[hexa][0] = row['Ca_cyt']
+        ip3[hexa][0] = row['IP3']
+        Ca_stored[hexa][0] = row['Ca_stored']
+        ip3R_act[hexa][0] = row['IP3R_act']
+    
+    return Ca_cyt, ip3, Ca_stored, ip3R_act,
+      
 def make_links(var_dict, store_t):
     
     links = []

@@ -68,6 +68,10 @@ stripes = {
     'green': []
 }
 
+stripes = {
+    'green': []
+}
+
 # symmetric
 stripe_offset = 0
 for stripe in stripes:
@@ -155,7 +159,7 @@ if 'orange' in stripes:
 
 ##################################################################################################
 """ YELLOW """
-# calcium no diffusion (more meaningful)
+# calcium no diffusion (more meaningful) with graded starting conditions forming sweep
 if 'yellow' in stripes:
     
     # initialize V_PLC, different value in each hex
@@ -184,17 +188,17 @@ if 'yellow' in stripes:
     
     stripes_var['yellow'] = yellow_var
     print("Done YELLOW")
-
+    
 ##################################################################################################
 """ GREEN """
-# calcium with diffusion (turing pattern)
+# calcium no diffusion with constant starting conditions but varied frewquency, forming sweep
 if 'green' in stripes:
 
-    # initialize V_PLC, same value in each hex
-    params["V_PLC"] = allocate_var_dict(stripes['green'], 1, 0.787)
+    # initialize V_PLC, different value in each hex
+    params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], stripes['green'], (0.787,1.1), pointy)
 
     # set cell-cell communication, 0 => OFF, standard 0.02
-    params["D_IP3"] = 0.02
+    params["D_IP3"] = 0
 
     # allocation initial conditions for variables
     Ca_cyt_0 = 2
@@ -207,15 +211,47 @@ if 'green' in stripes:
 
     # set ICs randomly from V_PLC 0.787 df
     ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
-    variables = set_initial_conditions_from_df(ICs_df, variables)
+    variables = set_constant_initial_conditions_from_df_first_row(ICs_df, variables)
 
     Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
     Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['green'], params)
 
     green_var = Ca_cyt_new
-    
+
     stripes_var['green'] = green_var
     print("Done GREEN")
+
+##################################################################################################
+# """ GREEN """
+# # calcium with diffusion (turing pattern)
+# if 'green' in stripes:
+#
+#     # initialize V_PLC, same value in each hex
+#     params["V_PLC"] = allocate_var_dict(stripes['green'], 1, 0.787)
+#
+#     # set cell-cell communication, 0 => OFF, standard 0.02
+#     params["D_IP3"] = 0.02
+#
+#     # allocation initial conditions for variables
+#     Ca_cyt_0 = 2
+#     Ca_cyt = allocate_var_dict(stripes['green'], store_timepoint_N, Ca_cyt_0)
+#     Ca_stored = allocate_var_dict(stripes['green'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+#     ip3 = allocate_var_dict(stripes['green'], store_timepoint_N, 0.2)
+#     ip3R_act = allocate_var_dict(stripes['green'], store_timepoint_N, 0.6)
+#
+#     variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+#
+#     # set ICs randomly from V_PLC 0.787 df
+#     ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
+#     variables = set_initial_conditions_from_df(ICs_df, variables)
+#
+#     Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
+#     Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi(variables, run_t, store_t, stripes['green'], params)
+#
+#     green_var = Ca_cyt_new
+#
+#     stripes_var['green'] = green_var
+#     print("Done GREEN")
 
 ##################################################################################################
 """ BLUE """
