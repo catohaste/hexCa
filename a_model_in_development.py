@@ -69,7 +69,7 @@ stripes = {
 }
 
 # stripes = {
-#     'green': []
+#     'yellow': []
 # }
 
 # symmetric
@@ -195,7 +195,7 @@ if 'yellow' in stripes:
 if 'green' in stripes:
 
     # initialize V_PLC, different value in each hex
-    params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], stripes['green'], (0.787,1.1), pointy)
+    params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], stripes['green'], (1.1,0.787), pointy)
 
     # set cell-cell communication, 0 => OFF, standard 0.02
     params["D_IP3"] = 0
@@ -278,11 +278,11 @@ if 'blue' in stripes:
 
     """potential"""
     potential_connections = nx.Graph()
-    potential_connections.add_nodes_from(hex_array)
-    for hexa in hex_array:
+    potential_connections.add_nodes_from(blue_var)
+    for hexa in blue_var:
         neighbors = hex_neighbors_cumulative_distance(hexa, neighbour_dist_limit)
         for neighbor in neighbors:
-            if neighbor in hex_array:
+            if neighbor in blue_var:
                 potential_connections.add_edge(hexa, neighbor)
 
     potential_deg = list(dict(potential_connections.degree()).values())
@@ -296,7 +296,7 @@ if 'blue' in stripes:
         death_connections = {}
     else:
         initial_connections = nx.Graph()
-        initial_connections.add_nodes_from(hex_array)
+        initial_connections.add_nodes_from(blue_var)
 
         print('before', get_mean_degree_fraction(initial_connections, potential_connections))
         while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
@@ -332,6 +332,9 @@ if 'blue' in stripes:
                 death_connections[current_t].append(random_edge)
     
     stripes_var['blue'] = blue_var
+    
+    print(blue_var)
+    
     print("Done BLUE")
 
 

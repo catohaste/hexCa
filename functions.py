@@ -150,10 +150,11 @@ def initialize_var_dict_to_x_gradient_from_ICs_df(df, variables, hex_array, poin
         for i in range(row_copies_N):
             for index in row_indices:
                 out_row_indices.append(index)
-        out_row_indices.sort()
+        out_row_indices.sort(reverse=True) # reverse sort means stripe moves left to right
         out_row_indices = out_row_indices[:x_cols_N]
     else:
         out_row_indices = row_indices[:x_cols_N]
+        out_row_indices.sort(reverse=True) # reverse sort means stripe moves left to right
     
     for hexa in hex_array:
         current_x = centers[hexa][0]
