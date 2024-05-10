@@ -68,9 +68,14 @@ stripes = {
     'green': []
 }
 
-# stripes = {
-#     'yellow': []
-# }
+stripes = {
+    'yellow' : [],
+    'blue': []
+}
+
+stripes = {
+    'blue': []
+}
 
 # symmetric
 stripe_offset = 0
@@ -116,6 +121,8 @@ store_timepoint_N = len(store_t)
 # allocate all stripes
 
 stripes_var = {}
+animation_type = {} # set to 'colour' or 'connect' for each stripe
+connect_var = {}
 
 ##################################################################################################
 
@@ -124,6 +131,7 @@ if 'black' in stripes:
     black_var = allocate_var_dict(stripes['black'], store_timepoint_N, 0.8)
     
     stripes_var['black'] = black_var
+    animation_type['black'] = 'colour'
     print("Done BLACK")
 
 # constant random (colour hexagons)
@@ -132,6 +140,7 @@ if 'brown' in stripes:
     brown_var = set_var_dict_to_random_val_in_range_all_t(brown_var, [0,1])
     
     stripes_var['brown'] = brown_var
+    animation_type['brown'] = 'colour'
     print("Done BROWN")
 
 # random flashing (animate hexagons)
@@ -141,6 +150,7 @@ if 'red' in stripes:
     red_var = random_pulsing(red_var, stripes['red'], store_timepoint_N, (0,1))
     
     stripes_var['red'] = red_var
+    animation_type['red'] = 'colour'
     print("Done RED")
 
 # diffusion (something meaningful)
@@ -155,11 +165,12 @@ if 'orange' in stripes:
     orange_var = diffusion(orange_var, stripes['orange'], store_timepoint_N)
     
     stripes_var['orange'] = orange_var
+    animation_type['orange'] = 'colour'
     print("Done ORANGE")
 
 ##################################################################################################
 """ YELLOW """
-# calcium no diffusion (more meaningful) with graded starting conditions forming sweep
+# calcium no diffusion (more meaningful) with graded starting conditions but constant V_PLC forming sweep
 if 'yellow' in stripes:
     
     # initialize V_PLC, different value in each hex
@@ -187,11 +198,12 @@ if 'yellow' in stripes:
     yellow_var = Ca_cyt_new
     
     stripes_var['yellow'] = yellow_var
+    animation_type['yellow'] = 'colour'
     print("Done YELLOW")
     
 ##################################################################################################
 """ GREEN """
-# calcium no diffusion with constant starting conditions but varied frewquency, forming sweep
+# calcium no diffusion with constant starting conditions but varied frequency (V_PLC), forming sweep
 if 'green' in stripes:
 
     # initialize V_PLC, different value in each hex
@@ -219,6 +231,7 @@ if 'green' in stripes:
     green_var = Ca_cyt_new
 
     stripes_var['green'] = green_var
+    animation_type['green'] = 'colour'
     print("Done GREEN")
 
 ##################################################################################################
@@ -255,17 +268,18 @@ if 'green' in stripes:
 
 ##################################################################################################
 """ BLUE """
-# animated reduced connectivity
+# animated connections
 if 'blue' in stripes:
     
     blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.6)
     
     # connection params
     neighbour_dist_limit = 1 # how far away can I connect
-    init_avg_degree_fraction = 1 # average fraction of potential connections
+    init_avg_degree_fraction = 0.1 # average fraction of potential connections
     boundary_conditions = 'no-flux' # flux or no-flux
 
-    # both values should be a multiple of store_dt and less than t_endpoint
+    # both values should be a integers, and relate to the number of store_dt s
+    # they should be less than store_timepoint_N
     constant_connections = False
     birth_connect_dt = 2 # connection birth rate: new connection every x timesteps
     death_connect_dt = 4 # connection death rate: lose connection every x timesteps
@@ -287,7 +301,7 @@ if 'blue' in stripes:
 
     potential_deg = list(dict(potential_connections.degree()).values())
     # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
-    print("potential", potential_connections)
+    # print("potential", potential_connections)
 
     """initial"""
     if init_avg_degree_fraction == 1:
@@ -298,12 +312,12 @@ if 'blue' in stripes:
         initial_connections = nx.Graph()
         initial_connections.add_nodes_from(blue_var)
 
-        print('before', get_mean_degree_fraction(initial_connections, potential_connections))
+        # print('before', get_mean_degree_fraction(initial_connections, potential_connections))
         while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
             remaining_possible_connections = nx.difference(potential_connections, initial_connections)
             random_edge = random.sample(list(remaining_possible_connections.edges), 1)[0]
             initial_connections.add_edge(random_edge[0], random_edge[1])
-        print('after',get_mean_degree_fraction(initial_connections, potential_connections))
+        # print('after',get_mean_degree_fraction(initial_connections, potential_connections))
 
 
         """birth and death"""
@@ -311,10 +325,10 @@ if 'blue' in stripes:
         death_connections = {}
 
         # allocate
-        birth_t = range(birth_connect_dt, t_endpoint, birth_connect_dt)
+        birth_t = range(birth_connect_dt, store_timepoint_N, birth_connect_dt)
         for t in birth_t:
             birth_connections[t] = []
-        death_t = range(death_connect_dt, t_endpoint, death_connect_dt)
+        death_t = range(death_connect_dt, store_timepoint_N, death_connect_dt)
         for t in death_t:
             death_connections[t] = []
     
@@ -331,12 +345,19 @@ if 'blue' in stripes:
                 random_edge = random.sample(list(current_connections.edges), 1)[0]
                 death_connections[current_t].append(random_edge)
     
-    stripes_var['blue'] = blue_var
+    blue_connect_var = {
+        'initial_connections' : initial_connections,
+        'birth_connections' : birth_connections,
+        'death_connections' : death_connections
+    }
     
-    print(blue_var)
+    blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.4)
+    
+    stripes_var['blue'] = blue_var
+    animation_type['blue'] = 'connect'
+    connect_var['blue'] = blue_connect_var
     
     print("Done BLUE")
-
 
 ##################################################################################################
 """ PURPLE """
@@ -348,6 +369,7 @@ if 'purple' in stripes:
     purple_var = set_var_dict_to_random_val_in_range_all_t(purple_var, [0,1])
     
     stripes_var['purple'] = purple_var
+    animation_type['purple'] = 'colour'
     print("Done PURPLE")
 
 ##################################################################################################
@@ -358,9 +380,9 @@ for stripe in stripes:
     flag_colours = flag_colours + '_' + stripe
 flag_name = 'flag' + flag_colours
     
-plot_var_flag(stripes_var, 150, stripes, (hex_x_N, hex_y_N), pointy, 12, save_dir + flag_name + '_initial')
+# plot_var_flag(stripes_var, connect_var, 150, stripes, animation_type, (hex_x_N, hex_y_N), pointy, 12, save_dir + flag_name + '_initial')
 
-animate_var_flag(stripes_var, store_timepoint_N, stripes, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
+animate_var_flag(stripes_var, connect_var, store_timepoint_N, stripes, animation_type, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
 
 ##################################################################################################
 # """ SET INITIAL CONDITIONS """
