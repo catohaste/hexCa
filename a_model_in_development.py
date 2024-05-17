@@ -6,7 +6,6 @@ import datetime
 from shutil import copy2
 import time
 import pandas as pd
-import networkx as nx
 
 import matplotlib.pyplot as plt
 
@@ -69,13 +68,13 @@ stripes = {
 }
 
 stripes = {
-    'yellow' : [],
-    'blue': []
+    'blue' : [],
+    'purple': []
 }
 
-stripes = {
-    'blue': []
-}
+# stripes = {
+#     'blue': []
+# }
 
 # symmetric
 stripe_offset = 0
@@ -273,102 +272,94 @@ if 'blue' in stripes:
     
     blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.6)
     
-    # connection params
-    neighbour_dist_limit = 1 # how far away can I connect
-    init_avg_degree_fraction = 0.1 # average fraction of potential connections
-    boundary_conditions = 'no-flux' # flux or no-flux
-
-    # both values should be a integers, and relate to the number of store_dt s
-    # they should be less than store_timepoint_N
-    constant_connections = False
-    birth_connect_dt = 2 # connection birth rate: new connection every x timesteps
-    death_connect_dt = 4 # connection death rate: lose connection every x timesteps
-
     connection_params = {
-        'dist_limit': neighbour_dist_limit,
-        'init_avg_degree_fraction': init_avg_degree_fraction,
-        'boundary_conditions': boundary_conditions
+        'neighbour_dist_limit': 1, # how far away can I connect
+        'init_avg_degree_fraction' : 0.1, # average fraction of potential connections at start 
+        'boundary_conditions' : 'no-flux', # flux or no-flux
+        
+        'constant_connections' : False,
+        
+        # both values should be a integers, and relate to the number of store_dt s
+        # they should be less than store_timepoint_N
+        'birth_connect_dt' : 2, # connection birth rate: new connection every x timesteps
+        'death_connect_dt' : 4 # connection death rate: lose connection every x timesteps
     }
-
-    """potential"""
-    potential_connections = nx.Graph()
-    potential_connections.add_nodes_from(blue_var)
-    for hexa in blue_var:
-        neighbors = hex_neighbors_cumulative_distance(hexa, neighbour_dist_limit)
-        for neighbor in neighbors:
-            if neighbor in blue_var:
-                potential_connections.add_edge(hexa, neighbor)
-
-    potential_deg = list(dict(potential_connections.degree()).values())
-    # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
-    # print("potential", potential_connections)
-
-    """initial"""
-    if init_avg_degree_fraction == 1:
-        initial_connections = potential_connections
-        birth_connections = {}
-        death_connections = {}
-    else:
-        initial_connections = nx.Graph()
-        initial_connections.add_nodes_from(blue_var)
-
-        # print('before', get_mean_degree_fraction(initial_connections, potential_connections))
-        while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
-            remaining_possible_connections = nx.difference(potential_connections, initial_connections)
-            random_edge = random.sample(list(remaining_possible_connections.edges), 1)[0]
-            initial_connections.add_edge(random_edge[0], random_edge[1])
-        # print('after',get_mean_degree_fraction(initial_connections, potential_connections))
-
-
-        """birth and death"""
-        birth_connections = {}
-        death_connections = {}
-
-        # allocate
-        birth_t = range(birth_connect_dt, store_timepoint_N, birth_connect_dt)
-        for t in birth_t:
-            birth_connections[t] = []
-        death_t = range(death_connect_dt, store_timepoint_N, death_connect_dt)
-        for t in death_t:
-            death_connections[t] = []
     
-        # set up connections
-        birth_and_death_t = list(set(list(birth_t) + list(death_t)))
-        birth_and_death_t.sort()
-        for current_t in birth_and_death_t:
-            current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
-            if current_t in birth_t:
-                possible_birth_connections = nx.difference(potential_connections, current_connections)
-                random_edge = random.sample(list(possible_birth_connections.edges), 1)[0]
-                birth_connections[current_t].append(random_edge)
-            if current_t in death_t:
-                random_edge = random.sample(list(current_connections.edges), 1)[0]
-                death_connections[current_t].append(random_edge)
+    connections_blue = create_connections(stripes['blue'], store_timepoint_N, connection_params)
     
-    blue_connect_var = {
-        'initial_connections' : initial_connections,
-        'birth_connections' : birth_connections,
-        'death_connections' : death_connections
-    }
+    # write connections to file
+    # dir_name = 'connections'
+    # if not path.isdir(dir_name):
+    #     mkdir(dir_name)
+    # write_connections_to_file(connections_blue, path.join(dir_name, 'blue_'))
+    
+    # load connections from file
+    connections_blue = load_connections_from_file(stripes['blue'], path.join(dir_name, 'blue_'))
     
     blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.4)
     
     stripes_var['blue'] = blue_var
     animation_type['blue'] = 'connect'
-    connect_var['blue'] = blue_connect_var
+    connect_var['blue'] = connections_blue
     
     print("Done BLUE")
 
 ##################################################################################################
 """ PURPLE """
-# ????????
 
 if 'purple' in stripes:
-
-    purple_var = allocate_var_dict(stripes['purple'], store_timepoint_N, 0.6)
-    purple_var = set_var_dict_to_random_val_in_range_all_t(purple_var, [0,1])
     
+    if 'blue' in stripes:
+
+        # # load blue connections into purple connections
+        # connections_purple = load_connections_from_file(stripes['blue'], path.join(dir_name, 'blue_'))
+        # # transpose blue connections to purple hexes
+        #
+        # print(stripes['blue'][0])
+        # print(stripes['purple'][0])
+        
+        connections_purple = create_connections(stripes['purple'], store_timepoint_N, connection_params)
+        initial_connections_purple = connections_purple['initial_connections']
+        birth_connections_purple = connections_purple['birth_connections']
+        death_connections_purple = connections_purple['death_connections']
+
+    else:
+    
+        connections_purple = create_connections(stripes['purple'], store_timepoint_N, connection_params)
+        initial_connections_purple = connections_purple['initial_connections']
+        birth_connections_purple = connections_purple['birth_connections']
+        death_connections_purple = connections_purple['death_connections']
+    
+    purple_var = allocate_var_dict(stripes['purple'], store_timepoint_N, 0.6)
     stripes_var['purple'] = purple_var
+    # purple_var = set_var_dict_to_random_val_in_range_all_t(purple_var, [0,1])
+    
+    # initialize V_PLC
+    params["V_PLC"] = allocate_var_dict(stripes['purple'], 1, 0.787)
+
+    # set cell-cell communication, 0 => OFF, standard 0.02
+    params["D_IP3"] = 0.02
+
+    # allocation initial conditions for variables
+    Ca_cyt_0 = 2
+    Ca_cyt = allocate_var_dict(stripes['purple'], store_timepoint_N, Ca_cyt_0)
+    Ca_stored = allocate_var_dict(stripes['purple'], store_timepoint_N, params["c_tot"] - Ca_cyt_0)
+    ip3 = allocate_var_dict(stripes['purple'], store_timepoint_N, 0.2)
+    ip3R_act = allocate_var_dict(stripes['purple'], store_timepoint_N, 0.6)
+
+    variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
+
+    # set ICs randomly from V_PLC 0.787 df
+    ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
+    variables = set_constant_initial_conditions_from_df_first_row(ICs_df, variables)
+    # less_random_ICs_df = pd.read_csv("not_random_ICs_40_6.csv", delimiter=',', header=0, index_col=0)
+    # variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
+
+    Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
+    Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(variables, run_t, store_t, stripes['purple'], initial_connections_purple, birth_connections_purple, death_connections_purple, params)
+
+    stripes_var['purple'] = Ca_cyt_new
+    
     animation_type['purple'] = 'colour'
     print("Done PURPLE")
 
@@ -382,7 +373,7 @@ flag_name = 'flag' + flag_colours
     
 # plot_var_flag(stripes_var, connect_var, 150, stripes, animation_type, (hex_x_N, hex_y_N), pointy, 12, save_dir + flag_name + '_initial')
 
-animate_var_flag(stripes_var, connect_var, store_timepoint_N, stripes, animation_type, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
+# animate_var_flag(stripes_var, connect_var, store_timepoint_N, stripes, animation_type, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
 
 ##################################################################################################
 # """ SET INITIAL CONDITIONS """

@@ -1,6 +1,11 @@
 import numpy as np
 from collections import Counter
 from copy import deepcopy
+import random
+import networkx as nx
+import pickle
+import json
+from os import path
 
 from lib import *
 
@@ -352,4 +357,161 @@ def get_current_connections(current_t, initial_connections, birth_connections, d
             current_connections.remove_edge(remove_edge[0], remove_edge[1])
         
     return current_connections
+    
+def create_connections(hexes_list, timepoint_N, connection_params):
+    
+    """potential"""
+    potential_connections = nx.Graph()
+    potential_connections.add_nodes_from(hexes_list)
+    for hexa in hexes_list:
+        neighbors = hex_neighbors_cumulative_distance(hexa, connection_params['neighbour_dist_limit'])
+        for neighbor in neighbors:
+            if neighbor in hexes_list:
+                potential_connections.add_edge(hexa, neighbor)
+                
+    # print(potential_connections)
+
+    potential_deg = list(dict(potential_connections.degree()).values())
+    # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
+    # print("potential", potential_connections)
+
+    """initial"""
+    if connection_params['init_avg_degree_fraction'] == 1:
+        initial_connections = potential_connections
+        birth_connections = {}
+        death_connections = {}
+    else:
+        initial_connections = nx.Graph()
+        initial_connections.add_nodes_from(hexes_list)
+
+        # print('before', get_mean_degree_fraction(initial_connections, potential_connections))
+        while get_mean_degree_fraction(initial_connections, potential_connections) < connection_params['init_avg_degree_fraction']:
+            remaining_possible_connections = nx.difference(potential_connections, initial_connections)
+            random_edge = random.sample(list(remaining_possible_connections.edges), 1)[0]
+            initial_connections.add_edge(random_edge[0], random_edge[1])
+        # print('after',get_mean_degree_fraction(initial_connections, potential_connections))
+
+        """birth and death"""
+        birth_connections = {}
+        death_connections = {}
+
+        # allocate
+        birth_t = range(connection_params['birth_connect_dt'], timepoint_N, connection_params['birth_connect_dt'])
+        for t in birth_t:
+            birth_connections[t] = []
+        death_t = range(connection_params['death_connect_dt'], timepoint_N, connection_params['death_connect_dt'])
+        for t in death_t:
+            death_connections[t] = []
+    
+        # set up connections
+        birth_and_death_t = list(set(list(birth_t) + list(death_t)))
+        birth_and_death_t.sort()
+        for current_t in birth_and_death_t:
+            current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
+            if current_t in birth_t:
+                possible_birth_connections = nx.difference(potential_connections, current_connections)
+                random_edge = random.sample(list(possible_birth_connections.edges), 1)[0]
+                birth_connections[current_t].append(random_edge)
+            if current_t in death_t:
+                random_edge = random.sample(list(current_connections.edges), 1)[0]
+                death_connections[current_t].append(random_edge)
+                
+        connections_dict = {
+            'initial_connections'   : initial_connections,
+            'birth_connections'     : birth_connections,
+            'death_connections'     : death_connections
+        }
+        
+        return connections_dict
+        
+def write_connections_to_file(connections_dict, filename_prefix):
+    
+    # you cannot pickle Hex class from lib.py
+    # I've done a ridiculous work around so that you can store Hex
+    # Hex is just named tuple from 'collections'. I have removed the name
+    
+    ### INITIAL #####
+    initial_connections = connections_dict['initial_connections']
+    initial_connections_edgelist = list(initial_connections.edges)
+    
+    non_hex_initial_edgelist = []
+    for hex_edge in initial_connections_edgelist:
+        non_hex_edge = hex_edge_to_non_hex_edge(hex_edge)
+        non_hex_initial_edgelist.append(non_hex_edge)
+    
+    with open(filename_prefix + 'initial.p', 'wb') as initial_file:
+        pickle.dump(non_hex_initial_edgelist, initial_file)
+        
+    ### BIRTH #####
+    birth_connections = connections_dict['birth_connections']
+    birth_connections_non_hex = {}
+    for key in birth_connections:
+        edge_list = birth_connections[key]
+        birth_connections_non_hex[key] = [hex_edge_to_non_hex_edge(hex_edge) for hex_edge in edge_list]
+        
+    with open(filename_prefix + 'birth.p', 'wb') as birth_file:
+        pickle.dump(birth_connections_non_hex, birth_file)
+        
+    ### DEATH #####
+    death_connections = connections_dict['death_connections']
+    death_connections_non_hex = {}
+    for key in death_connections:
+        edge_list = death_connections[key]
+        death_connections_non_hex[key] = [hex_edge_to_non_hex_edge(hex_edge) for hex_edge in edge_list]
+
+    with open(filename_prefix + 'death.p', 'wb') as death_file:
+        pickle.dump(death_connections_non_hex, death_file)
+    
+    return
+    
+def load_connections_from_file(hexes_list, filename_prefix):
+    
+    ### INITIAL #####
+    with open(filename_prefix + 'initial.p', 'rb') as initial_file:   # Unpickling
+        non_hex_initial_edgelist = pickle.load(initial_file)
+    
+    initial_connections = nx.Graph()
+    initial_connections.add_nodes_from(hexes_list)
+
+    for non_hex_edge in non_hex_initial_edgelist:
+        hex_edge = non_hex_edge_to_hex_edge(non_hex_edge)
+        initial_connections.add_edge(hex_edge[0], hex_edge[1])
+        
+    ### BIRTH #####
+    with open(filename_prefix + 'birth.p', 'rb') as birth_file:
+        birth_connections_non_hex = pickle.load(birth_file)
+    birth_connections = {}
+    for key in birth_connections_non_hex:
+        edge_list = birth_connections_non_hex[key]
+        birth_connections[key] = [non_hex_edge_to_hex_edge(non_hex_edge) for non_hex_edge in edge_list]
+        
+    ### DEATH #####
+    with open(filename_prefix + 'death.p', 'rb') as death_file:
+        death_connections_non_hex = pickle.load(death_file)
+    death_connections = {}
+    for key in death_connections_non_hex:
+        edge_list = death_connections_non_hex[key]
+        death_connections[key] = [non_hex_edge_to_hex_edge(non_hex_edge) for non_hex_edge in edge_list]
+
+    connections_dict = {}
+    connections_dict['initial_connections'] = initial_connections
+    connections_dict['birth_connections'] = birth_connections
+    connections_dict['death_connections'] = death_connections
+    
+    return connections_dict
+    
+def hex_edge_to_non_hex_edge(hex_edge):
+    
+    non_hex_edge = ( (hex_edge[0].q, hex_edge[0].r, hex_edge[0].s) ,  (hex_edge[1].q, hex_edge[1].r, hex_edge[1].s) )
+    
+    return non_hex_edge
+    
+def non_hex_edge_to_hex_edge(non_hex_edge):
+    
+    hex_edge = ( Hex(non_hex_edge[0][0], non_hex_edge[0][1], non_hex_edge[0][2]), Hex(non_hex_edge[1][0], non_hex_edge[1][1], non_hex_edge[1][2]) )
+    
+    return hex_edge
+
+
+    
     

@@ -54,6 +54,8 @@ def get_truncated_norm(stripe, value_loc_tuples):
         var_norm = truncate_norm_for_cmap(data_min_val, data_max_val, 0.2, 1)
     elif stripe == 'blue':
         var_norm = mpl.colors.Normalize(vmin=0, vmax=1)
+    elif stripe == 'purple':
+        var_norm = truncate_norm_for_cmap(data_min_val, data_max_val, 0.3, 0.9)
     else:
         var_norm = mpl.colors.Normalize(vmin=data_min_val, vmax=data_max_val)
         
