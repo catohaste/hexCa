@@ -58,22 +58,22 @@ stripes = {
     'purple': [],
 }
 
-stripes = {
-    'black': [],
-    'brown': [],
-    'red': [],
-    'orange': [],
-    'yellow': [],
-    'green': []
-}
-
-stripes = {
-    'blue' : [],
-    'purple': []
-}
-
 # stripes = {
-#     'blue': []
+#     'black': [],
+#     'brown': [],
+#     'red': [],
+#     'orange': [],
+#     'yellow': [],
+#     'green': []
+# }
+#
+# stripes = {
+#     'blue' : [],
+#     'purple': []
+# }
+#
+# stripes = {
+#     'red': []
 # }
 
 # symmetric
@@ -136,7 +136,23 @@ if 'black' in stripes:
 # constant random (colour hexagons)
 if 'brown' in stripes:
     brown_var = allocate_var_dict(stripes['brown'], store_timepoint_N, 0.6)
-    brown_var = set_var_dict_to_random_val_in_range_all_t(brown_var, [0,1])
+    
+    ##### INITIAL CONDITIONS ############
+    # # set ICs randomly
+    # brown_var = set_var_dict_to_random_val_in_range_all_t(brown_var, [0,1])
+    #
+    # # create less random ICs
+    # brown_less_random_ICs_df = pd.DataFrame(columns=['q','r','s','value'])
+    # for idx, hexa in enumerate(stripes['brown']):
+    #      brown_less_random_ICs_df.loc[idx] = [hexa.q, hexa.r, hexa.s] + [brown_var[hexa][0]]
+    # brown_less_random_ICs_df.to_csv(path_or_buf='not_random_ICs_brown.csv')
+    
+    # load less random ICs
+    brown_ICs_df = pd.read_csv("not_random_ICs_brown.csv", delimiter=',', header=0, index_col=0)
+    for idx, row in brown_ICs_df.iterrows():
+        hexa = Hex(row['q'],row['r'],row['s'])
+        for t in range(store_timepoint_N):
+            brown_var[hexa][t] = row['value']
     
     stripes_var['brown'] = brown_var
     animation_type['brown'] = 'colour'
@@ -145,7 +161,23 @@ if 'brown' in stripes:
 # random flashing (animate hexagons)
 if 'red' in stripes:
     red_var = allocate_var_dict(stripes['red'], store_timepoint_N, 0.6)
-    red_var = initialize_var_dict_to_random_val_in_range(red_var, [0,1])
+    
+    #### INITIAL CONDITIONS ############
+    # # set ICs randomly
+    # red_var = initialize_var_dict_to_random_val_in_range(red_var, [0,1])
+    #
+    # # create less random ICs
+    # red_less_random_ICs_df = pd.DataFrame(columns=['q','r','s','value'])
+    # for idx, hexa in enumerate(stripes['red']):
+    #      red_less_random_ICs_df.loc[idx] = [hexa.q, hexa.r, hexa.s] + [red_var[hexa][0]]
+    # red_less_random_ICs_df.to_csv(path_or_buf='not_random_ICs_red.csv')
+    
+    # load less random ICs
+    red_ICs_df = pd.read_csv("not_random_ICs_red.csv", delimiter=',', header=0, index_col=0)
+    for idx, row in red_ICs_df.iterrows():
+        hexa = Hex(row['q'],row['r'],row['s'])
+        red_var[hexa][0] = row['value']
+    
     red_var = random_pulsing(red_var, stripes['red'], store_timepoint_N, (0,1))
     
     stripes_var['red'] = red_var
