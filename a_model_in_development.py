@@ -281,20 +281,19 @@ if 'blue' in stripes:
         
         # both values should be a integers, and relate to the number of store_dt s
         # they should be less than store_timepoint_N
-        'birth_connect_dt' : 2, # connection birth rate: new connection every x timesteps
+        'birth_connect_dt' : 1, # connection birth rate: new connection every x timesteps
         'death_connect_dt' : 4 # connection death rate: lose connection every x timesteps
     }
     
-    connections_blue = create_connections(stripes['blue'], store_timepoint_N, connection_params)
-    
-    # write connections to file
+    # create connections and write to file
+    # connections_blue = create_connections(stripes['blue'], store_timepoint_N, connection_params)
     # dir_name = 'connections'
     # if not path.isdir(dir_name):
     #     mkdir(dir_name)
     # write_connections_to_file(connections_blue, path.join(dir_name, 'blue_'))
     
     # load connections from file
-    connections_blue = load_connections_from_file(stripes['blue'], path.join(dir_name, 'blue_'))
+    connections_blue = load_connections_from_file(stripes['blue'], path.join('connections', 'blue_'))
     
     blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.4)
     
@@ -309,26 +308,19 @@ if 'blue' in stripes:
 
 if 'purple' in stripes:
     
-    if 'blue' in stripes:
-
-        # # load blue connections into purple connections
-        # connections_purple = load_connections_from_file(stripes['blue'], path.join(dir_name, 'blue_'))
-        # # transpose blue connections to purple hexes
-        #
-        # print(stripes['blue'][0])
-        # print(stripes['purple'][0])
-        
-        connections_purple = create_connections(stripes['purple'], store_timepoint_N, connection_params)
-        initial_connections_purple = connections_purple['initial_connections']
-        birth_connections_purple = connections_purple['birth_connections']
-        death_connections_purple = connections_purple['death_connections']
-
-    else:
+    # create connections and write to file
+    # connections_purple = create_connections(stripes['purple'], store_timepoint_N, connection_params)
+    # dir_name = 'connections'
+    # if not path.isdir(dir_name):
+    #     mkdir(dir_name)
+    # write_connections_to_file(connections_purple, path.join(dir_name, 'purple_'))
     
-        connections_purple = create_connections(stripes['purple'], store_timepoint_N, connection_params)
-        initial_connections_purple = connections_purple['initial_connections']
-        birth_connections_purple = connections_purple['birth_connections']
-        death_connections_purple = connections_purple['death_connections']
+    # load connections from file
+    connections_purple = load_connections_from_file(stripes['purple'], path.join('connections', 'purple_'))
+    
+    initial_connections_purple = connections_purple['initial_connections']
+    birth_connections_purple = connections_purple['birth_connections']
+    death_connections_purple = connections_purple['death_connections']
     
     purple_var = allocate_var_dict(stripes['purple'], store_timepoint_N, 0.6)
     stripes_var['purple'] = purple_var
@@ -351,16 +343,23 @@ if 'purple' in stripes:
 
     # set ICs randomly from V_PLC 0.787 df
     ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
-    variables = set_constant_initial_conditions_from_df_first_row(ICs_df, variables)
-    # less_random_ICs_df = pd.read_csv("not_random_ICs_40_6.csv", delimiter=',', header=0, index_col=0)
-    # variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
-
+    # create_less_random_initial_conditions_df(stripes['purple'], ICs_df, 'not_random_ICs_purple.csv')
+    less_random_ICs_df = pd.read_csv("not_random_ICs_purple.csv", delimiter=',', header=0, index_col=0)
+    variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
+    
+    # variables = set_initial_conditions_from_df(ICs_df, variables) # random initial conditions
+    # variables = set_constant_initial_conditions_from_df_first_row(ICs_df, variables) # constant initial conditions (in space)
+    
     Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = Ca_cyt, ip3, Ca_stored, ip3R_act,
     Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(variables, run_t, store_t, stripes['purple'], initial_connections_purple, birth_connections_purple, death_connections_purple, params)
 
     stripes_var['purple'] = Ca_cyt_new
     
     animation_type['purple'] = 'colour'
+    
+    # animation_type['purple'] = 'connect'
+    # connect_var['purple'] = connections_purple
+    
     print("Done PURPLE")
 
 ##################################################################################################
@@ -371,9 +370,9 @@ for stripe in stripes:
     flag_colours = flag_colours + '_' + stripe
 flag_name = 'flag' + flag_colours
     
-# plot_var_flag(stripes_var, connect_var, 150, stripes, animation_type, (hex_x_N, hex_y_N), pointy, 12, save_dir + flag_name + '_initial')
+plot_var_flag(stripes_var, connect_var, 150, stripes, animation_type, (hex_x_N, hex_y_N), pointy, 12, save_dir + flag_name + '_initial')
 
-# animate_var_flag(stripes_var, connect_var, store_timepoint_N, stripes, animation_type, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
+animate_var_flag(stripes_var, connect_var, store_timepoint_N, stripes, animation_type, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
 
 ##################################################################################################
 # """ SET INITIAL CONDITIONS """

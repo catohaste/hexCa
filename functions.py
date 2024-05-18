@@ -6,6 +6,7 @@ import networkx as nx
 import pickle
 import json
 from os import path
+import pandas as pd
 
 from lib import *
 
@@ -208,19 +209,30 @@ def set_initial_conditions_from_df(df, variables):
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
     
+def create_less_random_initial_conditions_df(hexes_list, ICs_df, filename):
+    
+    existing_column_names = ICs_df.columns.values.tolist()
+    qrs = ['q','r','s']
+    new_column_names = qrs + existing_column_names
+    less_random_ICs_df = pd.DataFrame(columns=new_column_names)
+    
+    for idx, hexa in enumerate(hexes_list):
+        row = ICs_df.sample(1, ignore_index=True)
+        less_random_ICs_df.loc[idx] = [hexa.q, hexa.r, hexa.s] + list(row.loc[0])
+    
+    less_random_ICs_df.to_csv(path_or_buf=filename)
+    
 def set_initial_conditions_from_df_less_random(df, variables):
-    """ instead of choosing a random row (or set of initial conditions) collect a number for each hex.
-    """
+    """ instead of choosing a random row (or set of initial conditions) collect a number for each hex."""
     
     Ca_cyt, ip3, Ca_stored, ip3R_act, = variables
     
     for index, row in df.iterrows():
-        # print(row['q'], row['r'],row['s'])
-        hexa = Hex(row['q'],row['r'],row['s'] )
-        Ca_cyt[hexa][0] = row['Ca_cyt'].iloc[0]
-        ip3[hexa][0] = row['IP3'].iloc[0]
-        Ca_stored[hexa][0] = row['Ca_stored'].iloc[0]
-        ip3R_act[hexa][0] = row['IP3R_act'].iloc[0]
+        hexa = Hex(row['q'],row['r'],row['s'])
+        Ca_cyt[hexa][0] = row['Ca_cyt']
+        ip3[hexa][0] = row['IP3']
+        Ca_stored[hexa][0] = row['Ca_stored']
+        ip3R_act[hexa][0] = row['IP3R_act']
     
     return Ca_cyt, ip3, Ca_stored, ip3R_act,
   
@@ -408,13 +420,18 @@ def create_connections(hexes_list, timepoint_N, connection_params):
         birth_and_death_t.sort()
         for current_t in birth_and_death_t:
             current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
-            if current_t in birth_t:
-                possible_birth_connections = nx.difference(potential_connections, current_connections)
-                random_edge = random.sample(list(possible_birth_connections.edges), 1)[0]
-                birth_connections[current_t].append(random_edge)
-            if current_t in death_t:
-                random_edge = random.sample(list(current_connections.edges), 1)[0]
-                death_connections[current_t].append(random_edge)
+            possible_birth_connections = nx.difference(potential_connections, current_connections)
+            if len(list(possible_birth_connections.edges)) > 0:
+                if current_t in birth_t:
+                    random_edge = random.sample(list(possible_birth_connections.edges), 1)[0]
+                    birth_connections[current_t].append(random_edge)
+                if current_t in death_t:
+                    random_edge = random.sample(list(current_connections.edges), 1)[0]
+                    death_connections[current_t].append(random_edge)
+            else:
+                print('Fully connected at timepoint ' + str(current_t))
+                break
+                
                 
         connections_dict = {
             'initial_connections'   : initial_connections,
@@ -512,6 +529,26 @@ def non_hex_edge_to_hex_edge(non_hex_edge):
     
     return hex_edge
 
-
+def find_hexes_min_max(hexes_list):
     
+    # [ min[q,r,s] , max[q,r,s] ]
+    qrs_min_max = [ [float('inf'),float('inf'),float('inf')] , [float('-inf'),float('-inf'),float('-inf')] ]
+    for hexa in hexes_list:
+        if hexa.q < qrs_min_max[0][0]:
+            qrs_min_max[0][0] = hexa.q
+        if hexa.q > qrs_min_max[1][0]:
+            qrs_min_max[1][0] = hexa.q
+            
+        if hexa.r < qrs_min_max[0][1]:
+            qrs_min_max[0][1] = hexa.q
+        if hexa.r > qrs_min_max[1][1]:
+            qrs_min_max[1][1] = hexa.q
+            
+        if hexa.s < qrs_min_max[0][2]:
+            qrs_min_max[0][2] = hexa.q
+        if hexa.s > qrs_min_max[1][2]:
+            qrs_min_max[1][2] = hexa.q
+            
+    return qrs_min_max
+
     

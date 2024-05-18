@@ -170,6 +170,11 @@ def animate_var_flag(flag_var_dict, connect_var, timepoint_N, flag_hexes, animat
             if  animation_type[stripe] == 'connect':
 
                 current_t = i * sample_rate
+                
+                current_connect_var = connect_var[stripe]
+                initial_connections = current_connect_var['initial_connections']
+                birth_connections = current_connect_var['birth_connections']
+                death_connections = current_connect_var['death_connections']
         
                 try:
                     add_connections = birth_connections[current_t]
