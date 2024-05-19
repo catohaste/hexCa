@@ -61,10 +61,10 @@ def get_truncated_norm(stripe, value_loc_tuples):
         
     return var_norm
 
-def animate_var_flag(flag_var_dict, connect_var, timepoint_N, flag_hexes, animation_type, stripe_dim, pointy_layout, figsize_x, file_str):
+def animate_var_flag(run_selection, flag_var_dict, connect_var, timepoint_N, flag_hexes, animation_type, stripe_dim, pointy_layout, figsize_x, file_str):
     
     all_hexes = []
-    for stripe in flag_hexes:
+    for stripe in run_selection:
         all_hexes = all_hexes + flag_hexes[stripe]
     
     colormap_strings = {
@@ -80,10 +80,10 @@ def animate_var_flag(flag_var_dict, connect_var, timepoint_N, flag_hexes, animat
     norms = {}
     cmaps = {}
     
-    number_of_stripes = len(flag_hexes)
+    number_of_stripes = len(run_selection)
     
     grid_aspect_ratio = (stripe_dim[1] * number_of_stripes) / stripe_dim[0]
-    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio), layout='tight')
     ax = fig.add_subplot(111)
     
     hex_patches = {}
@@ -91,7 +91,7 @@ def animate_var_flag(flag_var_dict, connect_var, timepoint_N, flag_hexes, animat
     
     # sort out the colourmap with truncated min and maxs for cmap norm
     # for connections type animation, only single value is needed
-    for stripe in flag_hexes:
+    for stripe in run_selection:
     
         var_dict = flag_var_dict[stripe]
         hexes = flag_hexes[stripe]        
@@ -156,7 +156,7 @@ def animate_var_flag(flag_var_dict, connect_var, timepoint_N, flag_hexes, animat
     print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate),  ", video_length: ", video_length)
     
     def animate(i):
-        for stripe in flag_hexes:
+        for stripe in run_selection:
             var_dict = flag_var_dict[stripe]
             hexes = flag_hexes[stripe] 
         
@@ -232,10 +232,10 @@ def animate_var_flag(flag_var_dict, connect_var, timepoint_N, flag_hexes, animat
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
 
-def plot_var_flag(flag_var_dict, connect_var, timepoint_idx, flag_hexes, animation_type, stripe_dim, pointy_layout, figsize_x, save_dir):
+def plot_var_flag(run_selection, flag_var_dict, connect_var, timepoint_idx, flag_hexes, animation_type, stripe_dim, pointy_layout, figsize_x, save_dir):
     
     all_hexes = []
-    for stripe in flag_hexes:
+    for stripe in run_selection:
         all_hexes = all_hexes + flag_hexes[stripe]
     
     colormap_strings = {
@@ -249,13 +249,13 @@ def plot_var_flag(flag_var_dict, connect_var, timepoint_idx, flag_hexes, animati
         'purple': 'Purples'
     }
     
-    number_of_stripes = len(flag_hexes)
+    number_of_stripes = len(run_selection)
     
     grid_aspect_ratio = (stripe_dim[1] * number_of_stripes) / stripe_dim[0]
-    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio), layout='tight')
     ax = fig.add_subplot(111)
     
-    for stripe in flag_hexes:
+    for stripe in run_selection:
         
         var_dict = flag_var_dict[stripe]
         hexes = flag_hexes[stripe] 
