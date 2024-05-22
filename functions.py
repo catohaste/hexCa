@@ -370,6 +370,16 @@ def get_current_connections(current_t, initial_connections, birth_connections, d
         
     return current_connections
     
+def get_birth_and_death_t(timepoint_N, connection_params):
+    
+    birth_t = range(connection_params['birth_connect_dt'], timepoint_N, connection_params['birth_connect_dt'])
+    death_t = range(connection_params['death_connect_dt'], timepoint_N, connection_params['death_connect_dt'])
+    
+    birth_and_death_t = list(set(list(birth_t) + list(death_t)))
+    birth_and_death_t.sort()
+    
+    return birth_t, death_t, birth_and_death_t
+
 def create_connections(hexes_list, timepoint_N, connection_params):
     
     """potential"""
@@ -406,18 +416,20 @@ def create_connections(hexes_list, timepoint_N, connection_params):
         """birth and death"""
         birth_connections = {}
         death_connections = {}
+        
+        birth_t, death_t, birth_and_death_t = get_birth_and_death_t(timepoint_N, connection_params)
 
         # allocate
-        birth_t = range(connection_params['birth_connect_dt'], timepoint_N, connection_params['birth_connect_dt'])
+        # birth_t = range(connection_params['birth_connect_dt'], timepoint_N, connection_params['birth_connect_dt'])
         for t in birth_t:
             birth_connections[t] = []
-        death_t = range(connection_params['death_connect_dt'], timepoint_N, connection_params['death_connect_dt'])
+        # death_t = range(connection_params['death_connect_dt'], timepoint_N, connection_params['death_connect_dt'])
         for t in death_t:
             death_connections[t] = []
     
         # set up connections
-        birth_and_death_t = list(set(list(birth_t) + list(death_t)))
-        birth_and_death_t.sort()
+        # birth_and_death_t = list(set(list(birth_t) + list(death_t)))
+        # birth_and_death_t.sort()
         for current_t in birth_and_death_t:
             current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
             possible_birth_connections = nx.difference(potential_connections, current_connections)
@@ -431,7 +443,6 @@ def create_connections(hexes_list, timepoint_N, connection_params):
             else:
                 print('Fully connected at timepoint ' + str(current_t))
                 break
-                
                 
         connections_dict = {
             'initial_connections'   : initial_connections,

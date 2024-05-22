@@ -609,7 +609,7 @@ def demo_connections(connection_params, pointy_layout):
 
     pointy_radius = pointy_layout.size[0]
     
-    dist_lim = connection_params['dist_limit']
+    dist_lim = connection_params['neighbour_dist_limit']
     connect_fraction = connection_params['init_avg_degree_fraction']
     boundary_conditions = connection_params['boundary_conditions']
     

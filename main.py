@@ -77,8 +77,10 @@ flat = create_layout_from_dict(flat_layout_dict)
 
 ##################################################################################################
 # set up hexagonal grid with (q,r,s) coordinates
-hex_x_N = 40
+hex_x_N = 60
 hex_y_N = 6
+# hex_x_N = 40
+# hex_y_N = 6
 # hex_x_N = 50
 # hex_y_N = 50
 hex_array = []
@@ -109,7 +111,6 @@ for x in range(hex_x_N):
 #         hex_array.append(Hex(x,y,-x-y))
 
 ##################################################################################################
-
 t_endpoint = 600
 
 dt = 0.05
@@ -125,7 +126,7 @@ store_timepoint_N = len(store_t)
 # initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
 # params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
-params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (0.787,1.1), pointy)
+# params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (0.787,1.1), pointy)
 # print(params["V_PLC"])
 
 # set cell-cell communication, 0 => OFF, standard 0.02
@@ -145,108 +146,63 @@ variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
 # set ICs randomly from V_PLC 0.787 df 
 ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
-# variables = set_initial_conditions_from_df(ICs_df, variables)
+variables = set_initial_conditions_from_df(ICs_df, variables)
+
+create_less_random_initial_conditions_df(hex_array, ICs_df, 'not_random_ICs_60_6.csv')
 
 # ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0.435,0.845), pointy)
 # ip3R_act = initialize_var_dict_to_random_val_in_range(ip3R_act, (0,1.2))
-#ip3R_act (min, max) = (0.43397934441757985 0.8460908021227952) for V_PLC 0.787
+# ip3R_act (min, max) = (0.43397934441757985 0.8460908021227952) for V_PLC 0.787
 
 # set ICs less randomly from V_PLC 0.787 df
 # these conditions were selected randomly but now are the same for every run
-less_random_ICs_df = pd.read_csv("not_random_ICs_40_6.csv", delimiter=',', header=0, index_col=0)
-variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
+# less_random_ICs_df = pd.read_csv("not_random_ICs_40_6.csv", delimiter=',', header=0, index_col=0)
+# variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
 
 ##################################################################################################
 """ SET CONNECTIONS """
 """ Connections are an INPUT """
 """ A connection between cells allows IP3 to travel between these cells. See connection demo. """
 
-# connection params
-neighbour_dist_limit = 1 # how far away can I connect
-init_avg_degree_fraction = 1 # average fraction of potential connections
-boundary_conditions = 'no-flux' # flux or no-flux
-
-# both values should be a multiple of store_dt and less than t_endpoint
-constant_connections = True
-birth_connect_dt = t_endpoint # connection birth rate
-death_connect_dt = t_endpoint # connection death rate
-
-# constant_connections = False
-# birth_connect_dt = 2 # connection birth rate: new connection every x timesteps
-# death_connect_dt = 4 # connection death rate: lose connection every x timesteps
-
 connection_params = {
-    'dist_limit': neighbour_dist_limit,
-    'init_avg_degree_fraction': init_avg_degree_fraction,
-    'boundary_conditions': boundary_conditions
+    'neighbour_dist_limit': 1, # how far away can I connect
+    'init_avg_degree_fraction' : 0.1, # average fraction of potential connections at start 
+    'boundary_conditions' : 'no-flux', # flux or no-flux
+    
+    # both values should be a integers, and relate to the number of store_dt s
+    # they should be less than store_timepoint_N
+    # 'constant_connections' : True,
+    # 'birth_connect_dt' : t_endpoint, # connection birth rate: new connection every x timesteps
+    # 'death_connect_dt' : t_endpoint # connection death rate: lose connection every x timesteps
+    
+    # both values should be a integers, and relate to the number of store_dt s
+    # they should be less than store_timepoint_N
+    'constant_connections' : False,
+    'birth_connect_dt' : 1, # connection birth rate: new connection every x timesteps
+    'death_connect_dt' : 4 # connection death rate: lose connection every x timesteps
 }
 
-"""potential"""
-potential_connections = nx.Graph()
-potential_connections.add_nodes_from(hex_array)
-for hexa in hex_array:
-    neighbors = hex_neighbors_cumulative_distance(hexa, neighbour_dist_limit)
-    for neighbor in neighbors:
-        if neighbor in hex_array:
-            potential_connections.add_edge(hexa, neighbor)
+# create connections randomly and write to file
+# connections_dict = create_connections(hex_array, store_timepoint_N, connection_params)
+# dir_name = 'connections'
+# if not path.isdir(dir_name):
+#     mkdir(dir_name)
+# write_connections_to_file(connections_dict, path.join(dir_name, '60_6_'))
 
-potential_deg = list(dict(potential_connections.degree()).values())
-# print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
-print("potential", potential_connections)
+connections_dict = load_connections_from_file(hex_array, path.join('connections', '60_6_'))
 
-"""initial"""
-if init_avg_degree_fraction == 1:
-    initial_connections = potential_connections
-    birth_connections = {}
-    death_connections = {}
-else:
-    initial_connections = nx.Graph()
-    initial_connections.add_nodes_from(hex_array)
-
-    print('before', get_mean_degree_fraction(initial_connections, potential_connections))
-    while get_mean_degree_fraction(initial_connections, potential_connections) < init_avg_degree_fraction:
-        remaining_possible_connections = nx.difference(potential_connections, initial_connections)
-        random_edge = random.sample(list(remaining_possible_connections.edges), 1)[0]
-        initial_connections.add_edge(random_edge[0], random_edge[1])
-    print('after',get_mean_degree_fraction(initial_connections, potential_connections))
-
-
-    """birth and death"""
-    birth_connections = {}
-    death_connections = {}
-
-    # allocate
-    birth_t = range(birth_connect_dt, t_endpoint, birth_connect_dt)
-    for t in birth_t:
-        birth_connections[t] = []
-    death_t = range(death_connect_dt, t_endpoint, death_connect_dt)
-    for t in death_t:
-        death_connections[t] = []
-    
-    # set up connections
-    birth_and_death_t = list(set(list(birth_t) + list(death_t)))
-    birth_and_death_t.sort()
-    for current_t in birth_and_death_t:
-        current_connections = get_current_connections(current_t, initial_connections, birth_connections, death_connections)
-        if current_t in birth_t:
-            possible_birth_connections = nx.difference(potential_connections, current_connections)
-            random_edge = random.sample(list(possible_birth_connections.edges), 1)[0]
-            birth_connections[current_t].append(random_edge)
-        if current_t in death_t:
-            random_edge = random.sample(list(current_connections.edges), 1)[0]
-            death_connections[current_t].append(random_edge)
-        
-# print(initial_connections.edges())
-# print(birth_connections)
-# print(death_connections)
+initial_connections = connections_dict['initial_connections']
+birth_connections = connections_dict['birth_connections']
+death_connections = connections_dict['death_connections']
 
 # beginning connections
 plot_graph_fixed_time(initial_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Blues", save_dir + 'connections_start')
 
 # end connections
-if constant_connections:
+if connection_params['constant_connections']:
     end_connections = initial_connections
 else:
+    birth_t, death_t, birth_and_death_t = get_birth_and_death_t(store_timepoint_N, connection_params)
     end_connect_timepoint = max(birth_and_death_t)
     end_connections = get_current_connections(end_connect_timepoint, initial_connections, birth_connections, death_connections)
     
@@ -255,12 +211,8 @@ plot_graph_fixed_time(end_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12,
 print('initial', initial_connections)
 print('end', end_connections)
 
-
 # ANIMATE
 animate_connections(initial_connections, birth_connections, death_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Blues", save_dir + 'connections')
-
-# print(len(store_cell_connections))
-# print(len(store_cell_connections[0]))
 
 # print("size initial", sys.getsizeof(initial_connections))
 # print("size potential", sys.getsizeof(potential_connections))
@@ -290,8 +242,8 @@ time_params = {
     "endpoint": t_endpoint,
     'dt': dt,
     'store_dt': store_dt,
-    'birth_connect_dt': birth_connect_dt,
-    'death_connect_dt': death_connect_dt
+    'birth_connect_dt': connection_params['birth_connect_dt'],
+    'death_connect_dt': connection_params['death_connect_dt']
 }
 with open(pickle_dir + 'time_params.pickle', 'wb') as handle:
     pickle.dump(time_params, handle)
@@ -341,7 +293,7 @@ print('Time linking', link_time - pickling_time)
 plot_vars = [Ca_cyt_new, ip3_new]
 # link_vars = [Ca_cyt_links, ip3_links]
 plot_var_strings = ['Ca_cyt', 'IP3']
-color_strings = ['Blues', 'Oranges']
+color_strings = ['Oranges', 'Blues']
 
 for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
     animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
@@ -400,7 +352,9 @@ print('Time animating', anim_time - link_time)
 #     new_dict = dict(zip(new_col_names, new_row_values))
 #     not_random_ICs_df = not_random_ICs_df.append(new_dict, ignore_index=True)
 #
-# not_random_ICs_df.to_csv('not_random_ICs_50_50.csv')
+# not_random_ICs_df.to_csv('not_random_ICs_60_6.csv')
+
+##################################################################################################
 
 total_time = time.time()
 print('Total time', total_time - start)
