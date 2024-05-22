@@ -48,7 +48,7 @@ hex_x_N = 65
 hex_y_N = 5
 
 # run_selection = ['black', 'brown', 'red', 'orange', 'yellow', 'green', 'blue', 'purple']
-run_selection = ['yellow']
+run_selection = ['green']
 
 stripes = {
     'black': [],
@@ -100,6 +100,21 @@ store_t = np.arange(0,t_endpoint,store_dt)
 
 run_timepoint_N = len(run_t)
 store_timepoint_N = len(store_t)
+
+##################################################################################################
+
+connection_params = {
+    'neighbour_dist_limit': 1, # how far away can I connect
+    'init_avg_degree_fraction' : 0.1, # average fraction of potential connections at start 
+    'boundary_conditions' : 'no-flux', # flux or no-flux
+    
+    'constant_connections' : False,
+    
+    # both values should be a integers, and relate to the number of store_dt s
+    # they should be less than store_timepoint_N
+    'birth_connect_dt' : 1, # connection birth rate: new connection every x timesteps
+    'death_connect_dt' : 4 # connection death rate: lose connection every x timesteps
+}
 
 ##################################################################################################
 # allocate all stripes
@@ -289,19 +304,6 @@ if 'blue' in run_selection:
     
     blue_var = allocate_var_dict(stripes['blue'], store_timepoint_N, 0.6)
     
-    connection_params = {
-        'neighbour_dist_limit': 1, # how far away can I connect
-        'init_avg_degree_fraction' : 0.1, # average fraction of potential connections at start 
-        'boundary_conditions' : 'no-flux', # flux or no-flux
-        
-        'constant_connections' : False,
-        
-        # both values should be a integers, and relate to the number of store_dt s
-        # they should be less than store_timepoint_N
-        'birth_connect_dt' : 1, # connection birth rate: new connection every x timesteps
-        'death_connect_dt' : 4 # connection death rate: lose connection every x timesteps
-    }
-    
     # create connections and write to file
     # connections_blue = create_connections(stripes['blue'], store_timepoint_N, connection_params)
     # dir_name = 'connections'
@@ -389,6 +391,6 @@ flag_name = 'flag' + flag_colours
     
 plot_var_flag(run_selection, stripes_var, connect_var, 150, stripes, animation_type, (hex_x_N, hex_y_N), pointy, 12, save_dir + flag_name + '_initial')
 
-# animate_var_flag(run_selection, stripes_var, connect_var, store_timepoint_N, stripes, animation_type, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
+animate_var_flag(run_selection, stripes_var, connect_var, store_timepoint_N, stripes, animation_type, (hex_x_N,hex_y_N), pointy, 12, save_dir + flag_name)
 
 ##################################################################################################
