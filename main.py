@@ -77,13 +77,16 @@ flat = create_layout_from_dict(flat_layout_dict)
 
 ##################################################################################################
 # set up hexagonal grid with (q,r,s) coordinates
+# hex_x_N = 120
+# hex_y_N = 12
 hex_x_N = 60
 hex_y_N = 6
-# hex_x_N = 40
-# hex_y_N = 6
 # hex_x_N = 50
 # hex_y_N = 50
 hex_array = []
+
+dimension_suffix_str = '_' + str(hex_x_N) + '_' + str(hex_y_N)
+dimension_prefix_str = str(hex_x_N) + '_' + str(hex_y_N) + '_'
 
 # set up POINTY hexagonal grid with (q,r,s) coordinates
 # PARALLELOGRAM MAP
@@ -148,7 +151,7 @@ variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
 variables = set_initial_conditions_from_df(ICs_df, variables)
 
-create_less_random_initial_conditions_df(hex_array, ICs_df, 'not_random_ICs_60_6.csv')
+create_less_random_initial_conditions_df(hex_array, ICs_df, 'not_random_ICs' + dimension_suffix_str + '.csv')
 
 # ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0.435,0.845), pointy)
 # ip3R_act = initialize_var_dict_to_random_val_in_range(ip3R_act, (0,1.2))
@@ -183,13 +186,13 @@ connection_params = {
 }
 
 # create connections randomly and write to file
-# connections_dict = create_connections(hex_array, store_timepoint_N, connection_params)
-# dir_name = 'connections'
-# if not path.isdir(dir_name):
-#     mkdir(dir_name)
-# write_connections_to_file(connections_dict, path.join(dir_name, '60_6_'))
+connections_dict = create_connections(hex_array, store_timepoint_N, connection_params)
+dir_name = 'connections'
+if not path.isdir(dir_name):
+    mkdir(dir_name)
+write_connections_to_file(connections_dict, path.join(dir_name, dimension_prefix_str))
 
-connections_dict = load_connections_from_file(hex_array, path.join('connections', '60_6_'))
+connections_dict = load_connections_from_file(hex_array, path.join('connections', dimension_prefix_str))
 
 initial_connections = connections_dict['initial_connections']
 birth_connections = connections_dict['birth_connections']
@@ -327,32 +330,6 @@ all_color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']
 
 anim_time = time.time()
 print('Time animating', anim_time - link_time)
-
-##################################################################################################
-""" STORE """
-# # create dataframe for initial conditions
-# csv_out = {
-#     "time": store_t,
-#     "Ca_cyt": Ca_cyt_new[Hex(0,0,0)] ,
-#     "IP3": ip3_new[Hex(0,0,0)],
-#     "Ca_stored": Ca_stored_new[Hex(0,0,0)] ,
-#     "IP3R_act": ip3R_act_new[Hex(0,0,0)]
-# }
-#
-# pd.DataFrame(csv_out).to_csv(save_dir + "ICs_V_PLC_0787.csv")
-#
-# # create dataframe for less random initial conditions
-# new_col_names = ['q','r','s','time','Ca_cyt','IP3','Ca_stored','IP3R_act']
-# not_random_ICs_df = pd.DataFrame(columns=new_col_names)
-#
-# counter = 0
-# for hexa in hex_array:
-#     row = ICs_df.sample(1)
-#     new_row_values = [int(hexa.q), int(hexa.r), int(hexa.s)] +  row.values.flatten().tolist()
-#     new_dict = dict(zip(new_col_names, new_row_values))
-#     not_random_ICs_df = not_random_ICs_df.append(new_dict, ignore_index=True)
-#
-# not_random_ICs_df.to_csv('not_random_ICs_60_6.csv')
 
 ##################################################################################################
 

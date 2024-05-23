@@ -391,7 +391,7 @@ def create_connections(hexes_list, timepoint_N, connection_params):
             if neighbor in hexes_list:
                 potential_connections.add_edge(hexa, neighbor)
                 
-    # print(potential_connections)
+    print('potential', potential_connections)
 
     potential_deg = list(dict(potential_connections.degree()).values())
     # print(min(potential_deg), max(potential_deg), np.mean(potential_deg))
