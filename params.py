@@ -65,6 +65,6 @@ params = {
     # It isn't the maximal lower bound.
     # It also only applies when epsilon = 0
 
-    "D_IP3": 0.0 # seconds^(-1)
-    # "D_IP3": 0.02 # seconds^(-1)
+    # "D_IP3": 0.0 # seconds^(-1)
+    "D_IP3": 0.02 # seconds^(-1)
 }
