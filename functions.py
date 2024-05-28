@@ -402,6 +402,7 @@ def create_connections(hexes_list, timepoint_N, connection_params):
         initial_connections = potential_connections
         birth_connections = {}
         death_connections = {}
+        
     else:
         initial_connections = nx.Graph()
         initial_connections.add_nodes_from(hexes_list)
@@ -444,13 +445,13 @@ def create_connections(hexes_list, timepoint_N, connection_params):
                 print('Fully connected at timepoint ' + str(current_t))
                 break
                 
-        connections_dict = {
-            'initial_connections'   : initial_connections,
-            'birth_connections'     : birth_connections,
-            'death_connections'     : death_connections
-        }
-        
-        return connections_dict
+    connections_dict = {
+        'initial_connections'   : initial_connections,
+        'birth_connections'     : birth_connections,
+        'death_connections'     : death_connections
+    }
+    
+    return connections_dict
         
 def write_connections_to_file(connections_dict, filename_prefix):
     
