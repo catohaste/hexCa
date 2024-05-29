@@ -1,16 +1,9 @@
 ##################################################################################################
 """
 Potential issues
-What happens if all connections are made?
-How do I keep connections static?
-Can I pickle initial connections, and birth and death connections?
-    Cannot currently pickle lib.Hex class
 What if I want to make more than one connection at each time point?
 
-
 Tasks
-Animate connections
-Include connections in politi model
 Make politi model use SDEs
 
 """
@@ -34,6 +27,8 @@ from models import *
 from plot import *
 
 from params import params
+
+start = time.time()
 
 ##################################################################################################
 # set up results folder
@@ -77,12 +72,14 @@ flat = create_layout_from_dict(flat_layout_dict)
 
 ##################################################################################################
 # set up hexagonal grid with (q,r,s) coordinates
+# hex_x_N = 60
+# hex_y_N = 1
 # hex_x_N = 120
 # hex_y_N = 12
-hex_x_N = 60
-hex_y_N = 6
-# hex_x_N = 50
-# hex_y_N = 50
+# hex_x_N = 60
+# hex_y_N = 6
+hex_x_N = 50
+hex_y_N = 30
 hex_array = []
 
 dimension_suffix_str = '_' + str(hex_x_N) + '_' + str(hex_y_N)
@@ -114,7 +111,7 @@ for x in range(hex_x_N):
 #         hex_array.append(Hex(x,y,-x-y))
 
 ##################################################################################################
-t_endpoint = 600
+t_endpoint = 150
 
 dt = 0.05
 store_dt = 0.5
@@ -149,9 +146,8 @@ variables = Ca_cyt, ip3, Ca_stored, ip3R_act,
 
 # set ICs randomly from V_PLC 0.787 df 
 ICs_df = pd.read_csv("ICs.csv", delimiter=',', header=0, index_col=0)
-variables = set_initial_conditions_from_df(ICs_df, variables)
-
-create_less_random_initial_conditions_df(hex_array, ICs_df, 'not_random_ICs' + dimension_suffix_str + '.csv')
+# variables = set_initial_conditions_from_df(ICs_df, variables)
+# create_less_random_initial_conditions_df(hex_array, ICs_df, 'not_random_ICs' + dimension_suffix_str + '.csv')
 
 # ip3R_act = initialize_var_dict_to_x_gradient(ip3R_act, hex_array, (0.435,0.845), pointy)
 # ip3R_act = initialize_var_dict_to_random_val_in_range(ip3R_act, (0,1.2))
@@ -159,8 +155,12 @@ create_less_random_initial_conditions_df(hex_array, ICs_df, 'not_random_ICs' + d
 
 # set ICs less randomly from V_PLC 0.787 df
 # these conditions were selected randomly but now are the same for every run
-# less_random_ICs_df = pd.read_csv("not_random_ICs_40_6.csv", delimiter=',', header=0, index_col=0)
-# variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
+less_random_ICs_df = pd.read_csv('not_random_ICs' + dimension_suffix_str + '.csv', delimiter=',', header=0, index_col=0)
+variables = set_initial_conditions_from_df_less_random(less_random_ICs_df, variables)
+
+initialize_time = time.time()
+
+print('Time initializing', initialize_time - start)
 
 ##################################################################################################
 """ SET CONNECTIONS """
@@ -169,20 +169,20 @@ create_less_random_initial_conditions_df(hex_array, ICs_df, 'not_random_ICs' + d
 
 connection_params = {
     'neighbour_dist_limit': 1, # how far away can I connect
-    'init_avg_degree_fraction' : 0.1, # average fraction of potential connections at start 
+    'init_avg_degree_fraction' : 1, # average fraction of potential connections at start 
     'boundary_conditions' : 'no-flux', # flux or no-flux
     
     # both values should be a integers, and relate to the number of store_dt s
     # they should be less than store_timepoint_N
-    # 'constant_connections' : True,
-    # 'birth_connect_dt' : t_endpoint, # connection birth rate: new connection every x timesteps
-    # 'death_connect_dt' : t_endpoint # connection death rate: lose connection every x timesteps
+    'constant_connections' : True,
+    'birth_connect_dt' : t_endpoint, # connection birth rate: new connection every x timesteps
+    'death_connect_dt' : t_endpoint # connection death rate: lose connection every x timesteps
     
     # both values should be a integers, and relate to the number of store_dt s
     # they should be less than store_timepoint_N
-    'constant_connections' : False,
-    'birth_connect_dt' : 1, # connection birth rate: new connection every x timesteps
-    'death_connect_dt' : 4 # connection death rate: lose connection every x timesteps
+    # 'constant_connections' : False,
+    # 'birth_connect_dt' : 1, # connection birth rate: new connection every x timesteps
+    # 'death_connect_dt' : 4 # connection death rate: lose connection every x timesteps
 }
 
 # create connections randomly and write to file
@@ -190,9 +190,9 @@ connections_dict = create_connections(hex_array, store_timepoint_N, connection_p
 dir_name = 'connections'
 if not path.isdir(dir_name):
     mkdir(dir_name)
-write_connections_to_file(connections_dict, path.join(dir_name, dimension_prefix_str))
+# write_connections_to_file(connections_dict, path.join(dir_name, dimension_prefix_str + 'full_'))
 
-connections_dict = load_connections_from_file(hex_array, path.join('connections', dimension_prefix_str))
+connections_dict = load_connections_from_file(hex_array, path.join('connections', dimension_prefix_str + 'full_'))
 
 initial_connections = connections_dict['initial_connections']
 birth_connections = connections_dict['birth_connections']
@@ -214,8 +214,9 @@ plot_graph_fixed_time(end_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12,
 print('initial', initial_connections)
 print('end', end_connections)
 
-# ANIMATE
-animate_connections(initial_connections, birth_connections, death_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Blues", save_dir + 'connections')
+connect_time = time.time()
+
+print('Time connecting', connect_time - initialize_time)
 
 # print("size initial", sys.getsizeof(initial_connections))
 # print("size potential", sys.getsizeof(potential_connections))
@@ -232,7 +233,7 @@ Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new, = politi_reduced_connectivity(
 
 solv_time = time.time()
 
-print('Time solving', solv_time - start)
+print('Time solving', solv_time - connect_time)
 
 ##################################################################################################
 """ PICKLE """
@@ -293,21 +294,26 @@ print('Time linking', link_time - pickling_time)
 ##################################################################################################
 """ PLOT """
 
+# animate connections
+animate_connections(initial_connections, birth_connections, death_connections, hex_array, (hex_x_N,hex_y_N), pointy, 12, "Blues", save_dir + 'connections')
+
 plot_vars = [Ca_cyt_new, ip3_new]
 # link_vars = [Ca_cyt_links, ip3_links]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Oranges', 'Blues']
+plot_time_indicies = [0, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210]
 
 for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
-
+    animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str, show_time=True)
+    for plot_time in plot_time_indicies:
+        plot_var_by_color(var, plot_time, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time*store_dt)), show_time=True)
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
 # plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
 # color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']
-
+ 
 # save figs
 # plot_hexes(hex_array, (hex_x_N,hex_y_N), flat, 12, save_dir)
-# plot_var_by_color(Ca_cyt_new, 0, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir+ 'Ca_cyt' + '_intial')
+# plot_var_by_color(Ca_cyt_new, 0, hex_array, (hex_x_N,hex_y_N), pointy, 12, save_dir + 'Ca_cyt' + '_intial')
 
 new_variables = Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,
 all_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']

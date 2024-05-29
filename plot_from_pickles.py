@@ -4,20 +4,20 @@ import random
 
 from lib import *
 from functions import *
-from plot import animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_time_fixed_x_avg_y
+from plot import animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_time_fixed_x_avg_y, plot_var_by_color
 
 
 ##################################################################################################
 # results folder
 results_dir = "results/"
 
-save_dir = results_dir + '2022-04-27_1704 random ICs const V_PLC D0/'
+save_dir = results_dir + '2024-05-29_1302/'
 
 ##################################################################################################
 # LOAD PICKLES
 
 var_strings = ['Ca_cyt', 'IP3']
-color_strings = ['Blues', 'Oranges']
+color_strings = ['Oranges', 'Blues']
 
 pickle_dir = save_dir + "pickles/"
 
@@ -39,10 +39,11 @@ hex_array, ip3 = unpack_val_loc_tuple_std_layout(ip3_val_loc, pointy)
 
 variables = [Ca_cyt, ip3]
 
-store_timepoint_N = 2400
+store_timepoint_N = 1200
 store_timepoint_N = len(Ca_cyt[hex_array[0]])
+store_dt = 0.5
 
-hex_x_N,hex_y_N = 40, 6
+hex_x_N,hex_y_N = 50, 30
 
 ##################################################################################################
 # PLOT
@@ -54,9 +55,13 @@ hex_x_N,hex_y_N = 40, 6
 # plt.plot(ip3[hex_array[39]])
 #
 # plt.show()
+plot_time_indicies = [0, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210]
 
 for var, var_str, color_str in zip(variables, var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str)
+    animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_time', show_time=True)
     # animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
     # plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
+    for plot_time_idx in plot_time_indicies:
+        plot_var_by_color(var, plot_time_idx, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time_idx*store_dt)), show_time=True)
+    
     

@@ -11,6 +11,14 @@ from lib import *
 from functions import *
 from plot import set_axes_lims_from_hexes
 
+from matplotlib import font_manager
+
+font_dirs = ["/Users/clhastings/Library/Fonts"]  # The path to the custom font file.
+font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+
+for font_file in font_files:
+    font_manager.fontManager.addfont(font_file)
+
 # def truncate_colormap(cmap, minval=0.0, maxval=1.0, trunc_min=0,trunc_min=1, n=100):
 #     new_cmap = colors.LinearSegmentedColormap.from_list(
 #         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),

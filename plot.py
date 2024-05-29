@@ -12,6 +12,14 @@ import random
 from lib import *
 from functions import *
 
+from matplotlib import font_manager
+
+font_dirs = ["/Users/clhastings/Library/Fonts"]  # The path to the custom font file.
+font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+
+for font_file in font_files:
+    font_manager.fontManager.addfont(font_file)
+
 def set_axes_lims_from_hexes(ax, hexes, pointy_layout):
     
     pointy_radius =  pointy_layout.size[0] # assumes unsquished haxagons
@@ -126,7 +134,11 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
         # plt.show()
         anim_mp4.save(file_str + '_avg_over_y.mp4', writer='ffmpeg', fps=fps)
     
-def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str):
+def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str, show_time=False):
+    
+    # mpl.rcParams['font.family'] = 'sans-serif'
+    # matplotlib.rcParams['font.sans-serif'] = ['Arial']
+    mpl.rcParams['font.sans-serif'] = ['Clear Sans']
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
@@ -162,6 +174,11 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     ax.axis('off')
     plt.tight_layout()
     
+    if show_time:
+        time_string = 'Time = 0 s'
+        fig.subplots_adjust(top=0.95)
+        time_text = fig.text(0.40, 0.93, time_string, fontsize=30)
+    
     video_length = 30 # seconds
     fps = 48
     interval_from_fps = 1000/fps
@@ -172,6 +189,8 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
         frames_N = timepoint_N
     # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
     def animate(i):
+        if show_time:
+            time_text.set_text('Time = ' + str(int(i * sample_rate * store_dt)) + ' s')
         for hexa in hexes:
             val = var_dict[hexa][i*sample_rate]
             hex_patches[hexa].set_facecolor(var_cmap(var_norm(val)))
@@ -202,8 +221,14 @@ def animate_var_by_color(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_layo
     else:
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        
+    plt.close()
 
-def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir):
+def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir, show_time=False):
+    
+    mpl.rcParams['font.family'] = 'sans-serif'
+    # matplotlib.rcParams['font.sans-serif'] = ['Arial']
+    mpl.rcParams['font.sans-serif'] = ['Clear Sans']
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
@@ -223,6 +248,7 @@ def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layou
     hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
     
     grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
+        
     fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
     ax = fig.add_subplot(111)
     
@@ -232,16 +258,23 @@ def plot_var_by_color(var_dict, timepoint_idx, hexes, hex_grid_dim, pointy_layou
         ax.add_patch(patch)
     
     set_axes_lims_from_hexes(ax, hexes, pointy_layout)
-
+    
     ax.set_aspect('equal')
     fig.patch.set_visible(False)
     ax.axis('off')
-    plt.tight_layout()
+    fig.tight_layout()
     
+    if show_time:
+        text_string = 'Time = ' + str(int(timepoint_idx * store_dt)) + ' s'
+        fig.subplots_adjust(top=0.95)
+        fig.text(0.40, 0.93, text_string, fontsize=30)
+            
     if save_dir == 'show':
         plt.show()
     else:
-        plt.savefig(save_dir + '.png')
+        fig.savefig(save_dir + '.png')
+        
+    plt.close()
     
 def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
@@ -593,6 +626,8 @@ def animate_connections(initial_connections, birth_connections, death_connection
     else:
         anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=True)
         anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        
+    plt.close()
                 
     return
     
