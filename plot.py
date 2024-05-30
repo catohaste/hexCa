@@ -281,6 +281,57 @@ def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, po
         
     plt.close()
 
+def plot_colorbar(var_dict, figsize_x, color_str, save_dir):
+    
+    mpl.rcParams['font.family'] = 'sans-serif'
+    try:
+        mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    except:
+        mpl.rcParams['font.sans-serif'] = ['Arial']
+    
+    hexes_list = list(var_dict.keys())
+    hexesN = len(hexes_list)
+    example_hexa = hexes_list[0]
+    timepointN = len(var_dict[example_hexa])
+    minima = np.ndarray((hexesN,))
+    maxima = np.ndarray((hexesN,))
+
+    if color_str == 'constant':
+        # get colormap
+        min_val = 0
+        max_val = 1
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap('Greys')
+    else:
+        # get colormap
+        for hexa_idx, hexa in enumerate(var_dict):
+            minima[hexa_idx] = min(var_dict[hexa])
+            maxima[hexa_idx] = max(var_dict[hexa])
+        min_val = min(minima)
+        max_val = max(maxima)
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap(color_str)
+        
+    dummy_fig = plt.figure()
+    dummy_ax = dummy_fig.add_subplot(111)
+    
+    cb_fig = plt.figure(figsize=(figsize_x, figsize_x*0.03))
+    cb_ax = cb_fig.add_axes([0.05, 0.05, 0.9, 0.9])
+    
+    dummy_plot = dummy_ax.scatter(range(timepointN), range(timepointN), c=var_dict[example_hexa], cmap=var_cmap ,s=10, vmin=min_val, vmax=max_val)
+    cb_ticks = [round((min_val + max_val) * 0.2 ,2), round((min_val + max_val) * 0.5 ,2), round((min_val + max_val) * 0.8 ,2)]
+    cb_ticklabels = [str(x) for x in cb_ticks]
+    cb = cb_fig.colorbar(dummy_plot, cax=cb_ax, orientation='horizontal', ticks=cb_ticks)
+    cb.set_label(label=r'IP$_3$ ($\mathrm{\mu}$M)', fontsize=8)
+    cb.set_ticklabels(cb_ticklabels, fontsize=6)
+    
+    if save_dir == 'show':
+        plt.show()
+    else:
+        cb_fig.savefig(save_dir + '.png', bbox_inches='tight', dpi=600)
+        
+    plt.close()
+
 def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
     pointy_radius = pointy_layout.size[0]
