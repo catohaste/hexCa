@@ -135,7 +135,7 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
         # plt.show()
         anim_mp4.save(file_str + '_avg_over_y.mp4', writer='ffmpeg', fps=fps)
     
-def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str, show_time=False):
+def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, var_str, color_str, file_str, show_time=False, show_colorbar=False):
     
     mpl.rcParams['font.family'] = 'sans-serif'
     try:
@@ -167,7 +167,7 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
     for hexa in hexes:
         val = var_dict[hexa][0]
         center = hex_to_pixel(pointy_layout, hexa)
-        hex_patches[hexa] = RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val)), numVertices=6, radius=pointy_radius, edgecolor='k')
+        hex_patches[hexa] = RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val)), numVertices=6, radius=pointy_radius, edgecolor='k', linewidth=0.3)
         ax.add_patch(hex_patches[hexa])
     
     set_axes_lims_from_hexes(ax, hexes, pointy_layout)
@@ -177,10 +177,27 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
     ax.axis('off')
     plt.tight_layout()
     
-    if show_time:
-        time_string = 'Time = 0 s'
-        fig.subplots_adjust(top=0.95)
-        time_text = fig.text(0.40, 0.93, time_string, fontsize=30)
+    if var_str == 'IP3':
+        colorbar_label = r'IP$_3$ ($\mathrm{\mu}$M)'
+    elif var_str == 'Ca_cyt':
+        colorbar_label = r'Ca$_\mathrm{cyt}$ ($\mathrm{\mu}$M)'
+    else:
+        colorbar_label = ''
+    
+    time_string = 'Time = 0 s'
+    if show_colorbar:
+        fig.subplots_adjust(right=0.8)
+        cbar_ax = fig.add_axes([0.85, 0.2, 0.02, 0.6])
+        cb = fig.colorbar(mappable= mpl.cm.ScalarMappable(norm=var_norm, cmap=var_cmap), cax=cbar_ax)
+        cb.set_label(label=colorbar_label, fontsize=14)
+        file_str += '_colorbar'
+        if show_time:
+            time_text = fig.text(0.40, 0.9, time_string, fontsize=16)
+            file_str += '_time'
+    if (show_time and not show_colorbar):
+        fig.subplots_adjust(top=0.94)
+        time_text = fig.text(0.40, 0.92, time_string, fontsize=16)
+        file_str += '_time'
     
     video_length = 30 # seconds
     fps = 48
@@ -281,7 +298,7 @@ def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, po
         
     plt.close()
 
-def plot_colorbar(var_dict, figsize_x, color_str, save_dir):
+def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir):
     
     mpl.rcParams['font.family'] = 'sans-serif'
     try:
@@ -311,6 +328,13 @@ def plot_colorbar(var_dict, figsize_x, color_str, save_dir):
         max_val = max(maxima)
         var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
         var_cmap = plt.get_cmap(color_str)
+        
+    if var_str == 'IP3':
+        colorbar_label = r'IP$_3$ ($\mathrm{\mu}$M)'
+    elif var_str == 'Ca_cyt':
+        colorbar_label = r'Ca$_\mathrm{cyt}$ ($\mathrm{\mu}$M)'
+    else:
+        colorbar_label = ''
         
     dummy_fig = plt.figure()
     dummy_ax = dummy_fig.add_subplot(111)

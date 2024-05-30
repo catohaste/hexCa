@@ -111,7 +111,7 @@ for x in range(hex_x_N):
 #         hex_array.append(Hex(x,y,-x-y))
 
 ##################################################################################################
-t_endpoint = 150
+t_endpoint = 600
 
 dt = 0.05
 store_dt = 0.5
@@ -301,10 +301,11 @@ plot_vars = [Ca_cyt_new, ip3_new]
 # link_vars = [Ca_cyt_links, ip3_links]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Oranges', 'Blues']
-plot_time_indicies = [0, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210]
+plot_time_indicies = [int(x/store_dt)for x in [0, 488, 494, 500, 506, 512, 518, 524, 530, 536, 542, 548]]
 
 for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str, show_time=True)
+    animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True)
+    plot_colorbar(var, 5, var_str, color_str, save_dir + var_str + '_colorbar')
     for plot_time in plot_time_indicies:
         plot_var_by_color(var, plot_time, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time*store_dt)), show_time=True)
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
