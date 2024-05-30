@@ -13,12 +13,13 @@ from lib import *
 from functions import *
 
 from matplotlib import font_manager
-
 font_dirs = ["/Users/clhastings/Library/Fonts"]  # The path to the custom font file.
-font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
-
-for font_file in font_files:
-    font_manager.fontManager.addfont(font_file)
+try:
+    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+    for font_file in font_files:
+        font_manager.fontManager.addfont(font_file)
+except:
+    print('Local fonts not loaded.')
 
 def set_axes_lims_from_hexes(ax, hexes, pointy_layout):
     
@@ -136,9 +137,11 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
     
 def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, file_str, show_time=False):
     
-    # mpl.rcParams['font.family'] = 'sans-serif'
-    # matplotlib.rcParams['font.sans-serif'] = ['Arial']
-    mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    mpl.rcParams['font.family'] = 'sans-serif'
+    try:
+        mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    except:
+        mpl.rcParams['font.sans-serif'] = ['Arial']
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
@@ -227,8 +230,10 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
 def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir, show_time=False):
     
     mpl.rcParams['font.family'] = 'sans-serif'
-    # matplotlib.rcParams['font.sans-serif'] = ['Arial']
-    mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    try:
+        mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    except:
+        mpl.rcParams['font.sans-serif'] = ['Arial']
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
@@ -275,7 +280,7 @@ def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, po
         fig.savefig(save_dir + '.png')
         
     plt.close()
-    
+
 def plot_hexes(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
     pointy_radius = pointy_layout.size[0]
