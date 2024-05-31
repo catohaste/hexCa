@@ -76,10 +76,10 @@ flat = create_layout_from_dict(flat_layout_dict)
 # hex_y_N = 1
 # hex_x_N = 120
 # hex_y_N = 12
-# hex_x_N = 60
-# hex_y_N = 6
-hex_x_N = 50
-hex_y_N = 30
+hex_x_N = 60
+hex_y_N = 6
+# hex_x_N = 50
+# hex_y_N = 30
 hex_array = []
 
 dimension_suffix_str = '_' + str(hex_x_N) + '_' + str(hex_y_N)
@@ -111,7 +111,7 @@ for x in range(hex_x_N):
 #         hex_array.append(Hex(x,y,-x-y))
 
 ##################################################################################################
-t_endpoint = 600
+t_endpoint = 50
 
 dt = 0.05
 store_dt = 0.5
@@ -169,7 +169,7 @@ print('Time initializing', initialize_time - start)
 
 connection_params = {
     'neighbour_dist_limit': 1, # how far away can I connect
-    'init_avg_degree_fraction' : 1, # average fraction of potential connections at start 
+    'init_avg_degree_fraction' : 0.0, # average fraction of potential connections at start 
     'boundary_conditions' : 'no-flux', # flux or no-flux
     
     # both values should be a integers, and relate to the number of store_dt s
@@ -192,7 +192,7 @@ if not path.isdir(dir_name):
     mkdir(dir_name)
 # write_connections_to_file(connections_dict, path.join(dir_name, dimension_prefix_str + 'full_'))
 
-connections_dict = load_connections_from_file(hex_array, path.join('connections', dimension_prefix_str + 'full_'))
+# connections_dict = load_connections_from_file(hex_array, path.join('connections', dimension_prefix_str + 'full_'))
 
 initial_connections = connections_dict['initial_connections']
 birth_connections = connections_dict['birth_connections']
@@ -249,6 +249,7 @@ time_params = {
     'birth_connect_dt': connection_params['birth_connect_dt'],
     'death_connect_dt': connection_params['death_connect_dt']
 }
+
 with open(pickle_dir + 'time_params.pickle', 'wb') as handle:
     pickle.dump(time_params, handle)
 pickle_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new,]
@@ -265,12 +266,11 @@ hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]
 with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
     pickle.dump(hex_tuples, handle)
     
-# pickle_connects = [initial_connections, birth_connections, death_connections,]
-# pickle_connects_strings = ['initial_connections', 'birth_connections', 'death_connections',]
-# for connect, connect_str in zip(pickle_connects, pickle_connects_strings):
-#     print(connect_str)
-#     with open(pickle_dir + connect_str + '.pickle', 'wb') as handle:
-#         pickle.dump(connect, handle)
+with open(pickle_dir + 'connect_params.pickle', 'wb') as handle:
+    pickle.dump(connection_params, handle)
+    
+connect_str = str(connection_params['init_avg_degree_fraction']) + '_'
+write_connections_to_file(connections_dict, path.join(pickle_dir, dimension_prefix_str + connect_str))
 
 pickling_time = time.time()
 print('Time pickling', pickling_time - solv_time)
@@ -303,11 +303,12 @@ plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Oranges', 'Blues']
 plot_time_indicies = [int(x/store_dt)for x in [0, 488, 494, 500, 506, 512, 518, 524, 530, 536, 542, 548]]
 
-for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True)
-    plot_colorbar(var, 5, var_str, color_str, save_dir + var_str + '_colorbar')
-    for plot_time in plot_time_indicies:
-        plot_var_by_color(var, plot_time, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time*store_dt)), show_time=True)
+# for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
+#     animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 5, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True)
+    # plot_colorbar(var, 5, var_str, color_str, save_dir + var_str + '_colorbar')
+    # for plot_time in plot_time_indicies:
+    #     plot_var_by_color(var, plot_time, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time*store_dt)), show_time=True)
+    
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
 # plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
 # color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']

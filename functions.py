@@ -403,6 +403,12 @@ def create_connections(hexes_list, timepoint_N, connection_params):
         birth_connections = {}
         death_connections = {}
         
+    elif connection_params['init_avg_degree_fraction'] == 0:
+        initial_connections = nx.Graph()
+        initial_connections.add_nodes_from(hexes_list)
+        birth_connections = {}
+        death_connections = {}
+        
     else:
         initial_connections = nx.Graph()
         initial_connections.add_nodes_from(hexes_list)

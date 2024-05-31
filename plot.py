@@ -141,6 +141,7 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
     try:
         mpl.rcParams['font.sans-serif'] = ['Clear Sans']
     except:
+        print('Could not find font "Clear Sans."')
         mpl.rcParams['font.sans-serif'] = ['Arial']
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
@@ -250,6 +251,7 @@ def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, po
     try:
         mpl.rcParams['font.sans-serif'] = ['Clear Sans']
     except:
+        print('Could not find font "Clear Sans."')
         mpl.rcParams['font.sans-serif'] = ['Arial']
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
@@ -304,6 +306,7 @@ def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir):
     try:
         mpl.rcParams['font.sans-serif'] = ['Clear Sans']
     except:
+        print('Could not find font "Clear Sans."')
         mpl.rcParams['font.sans-serif'] = ['Arial']
     
     hexes_list = list(var_dict.keys())
@@ -835,4 +838,256 @@ def demo_connections(connection_params, pointy_layout):
         file_str = 'demo/demo_' + 'BC_' + boundary_conditions + '_distLim_' + str(dist_lim) + '_fraction_' + str(connect_fraction) + '_' + identifier[1] + '_' + identifier[0]
         fig.savefig(file_str + '.png')
     
+def thesis_vary_constant_connections_animation(varied_var_loc, varied_connections_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, var_str, color_str, file_str):
+    
+    mpl.rcParams['font.family'] = 'sans-serif'
+    try:
+        mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    except:
+        print('Could not find font "Clear Sans."')
+        mpl.rcParams['font.sans-serif'] = ['Arial']
         
+    pointy_radius = pointy_layout.size[0]
+    hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
+    
+    variations = list(varied_var_loc.keys())
+    variationsN = len(variations)
+        
+    fig, axes = plt.subplots(nrows=variationsN, ncols=2, figsize=(figsize_x, figsize_x*0.45))
+    
+    ### COLORMAP #######################################################
+    for variation_idx, variation in enumerate(variations):
+        current_val_loc = varied_var_loc[variation]
+        if color_str == 'constant':
+            # get colormap
+            min_val = 0
+            max_val = 1
+            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+            var_cmap = plt.get_cmap('Greys')
+        else:
+            # get colormap
+            min_val = min([min(val_array) for (val_array, center) in current_val_loc])
+            max_val = max([max(val_array) for (val_array, center) in current_val_loc])
+            var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+            var_cmap = plt.get_cmap(color_str)
+    
+    ### CONNECTIONS PLOT #######################################################
+    for variation_idx, variation in enumerate(variations):
+        current_ax = axes[variation_idx, 0]
+        current_connections = varied_connections_dict[variation]
+        current_initial_connections = current_connections['initial_connections']
+        
+        hex_patches = [RegularPolygon((center.x, center.y), edgecolor=var_cmap(0.8), facecolor=var_cmap(0.4), alpha=0.5, numVertices=6, radius=pointy_radius, linewidth=0.1) for center in hex_centers]
+        for patch in hex_patches:
+            current_ax.add_patch(patch)
+            
+        edge_line_dict = {}
+        for edge in current_initial_connections.edges:
+            point1 = hex_to_pixel(pointy_layout, edge[0])
+            point2 = hex_to_pixel(pointy_layout, edge[1])
+            x_coords = [point[0] for point in (point1,point2)]
+            y_coords = [point[1] for point in (point1,point2)]
+            l, = current_ax.plot(x_coords, y_coords, color=var_cmap(0.99), linewidth=0.15)
+            edge_line_dict[edge] = l
+            lines = [edge_line_dict[edge] for edge in edge_line_dict]
+     
+    ### VAR_DICT PLOT #######################################################
+    varied_hex_patches = {}
+    for variation_idx, variation in enumerate(variations):
+        current_ax = axes[variation_idx, 1]
+        current_var_loc = varied_var_loc[variation]
+        dummy_hex_array, current_var_dict = unpack_val_loc_tuple_std_layout(current_var_loc, pointy_layout)
+        
+        current_hex_patches = {}
+        for hexa in hexes:
+            val = current_var_dict[hexa][0]
+            center = hex_to_pixel(pointy_layout, hexa)
+            current_hex_patches[hexa] = RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val)), numVertices=6, radius=pointy_radius, edgecolor='k', linewidth=0.1)
+            current_ax.add_patch(current_hex_patches[hexa])
+        
+        varied_hex_patches[variation] = current_hex_patches
+        
+    ### ALL PLOTS #######################################################
+    for ax in axes.flat:
+        set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+        ax.set_aspect('equal')
+        ax.axis('off')
+    
+    fig.patch.set_visible(False)
+    
+    ### COLORBAR AND TIME #######################################################
+    if var_str == 'IP3':
+        colorbar_label = r'IP$_3$ ($\mathrm{\mu}$M)'
+    elif var_str == 'Ca_cyt':
+        colorbar_label = r'Ca$_\mathrm{cyt}$ ($\mathrm{\mu}$M)'
+    else:
+        colorbar_label = ''
+    
+    time_string = 'Time = 0 s'
+    fig.subplots_adjust(right=0.83, left=0.1, top=0.9, bottom=0, wspace=0.02, hspace = 0.02)
+    cbar_ax = fig.add_axes([0.88, 0.1, 0.02, 0.7])
+    cb = fig.colorbar(mappable= mpl.cm.ScalarMappable(norm=var_norm, cmap=var_cmap), cax=cbar_ax)
+    cb.set_label(label=colorbar_label, fontsize=14)
+    time_text = fig.text(0.55, 0.9, time_string, fontsize=16)
+    fig.text(0.02, 0.2, 'Connection fraction', fontsize=16, rotation='vertical')
+    fraction_heights = np.linspace(0.81, 0.06, num=variationsN)
+    for variation, height in zip(variations, fraction_heights):
+        fig.text(0.06, height, str(variation), fontsize=12)
+    
+    video_length = 30 # seconds
+    fps = 48
+    interval_from_fps = 1000/fps
+    frames_N = video_length * fps
+    sample_rate = int(np.floor(timepoint_N / frames_N))
+    if sample_rate == 0:
+        sample_rate = 1
+        frames_N = timepoint_N
+    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    def animate(i):
+        time_text.set_text('Time = ' + str(int(i * sample_rate * store_dt)) + ' s')
+        for variation_idx, variation in enumerate(variations):
+            current_ax = axes[variation_idx, 1]
+            current_var_loc = varied_var_loc[variation]
+            dummy_hex_array, current_var_dict = unpack_val_loc_tuple_std_layout(current_var_loc, pointy_layout)
+            current_hex_patches = varied_hex_patches[variation]
+            for hexa in hexes:
+                val = current_var_dict[hexa][i*sample_rate]
+                current_hex_patches[hexa].set_facecolor(var_cmap(var_norm(val)))
+        return
+
+    if file_str == 'show':
+        print("animation not currently working")
+        # OPTION 1
+        from matplotlib import rc
+        from IPython.display import HTML
+        anim_jupyter = FuncAnimation(fig, animate, frames=frames_N, interval=interval_from_fps, blit=False)
+        rc('animation', html='html5')
+        HTML(anim_jupyter.to_html5_video())
+        
+        # OPTION 2
+        # anim_jupyter = FuncAnimation(fig, animate, frames=frames_N, interval=interval_from_fps, blit=False)
+        # plt.show()
+        
+        # OPTION 3
+        # from IPython.display import HTML
+        # anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        # anim_mp4.save('hex_anim.mp4', writer='ffmpeg', fps=fps)
+        # HTML("""
+        #     <video alt="test" controls>
+        #         <source src="hex_anim.mp4" type="video/mp4">
+        #     </video>
+        # """)
+    else:
+        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        
+    plt.close()
+    
+def thesis_vary_constant_connections_stills(var_dict, initial_connections, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, var_str, color_str, file_str, show_time=False, show_colorbar=False):
+    
+    mpl.rcParams['font.family'] = 'sans-serif'
+    try:
+        mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    except:
+        mpl.rcParams['font.sans-serif'] = ['Arial']
+    
+    value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+    
+    if color_str == 'constant':
+        # get colormap
+        min_val = 0
+        max_val = 1
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap('Greys')
+    else:
+        # get colormap
+        min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
+        max_val = max([max(val_array) for (val_array, center) in value_loc_tuples])
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap(color_str)
+    
+    grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    ax = fig.add_subplot(111)
+    
+    pointy_radius = pointy_layout.size[0]
+    hex_patches = {}
+    for hexa in hexes:
+        val = var_dict[hexa][0]
+        center = hex_to_pixel(pointy_layout, hexa)
+        hex_patches[hexa] = RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val)), numVertices=6, radius=pointy_radius, edgecolor='k', linewidth=0.3)
+        ax.add_patch(hex_patches[hexa])
+    
+    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+    
+    ax.set_aspect('equal')
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    plt.tight_layout()
+    
+    if var_str == 'IP3':
+        colorbar_label = r'IP$_3$ ($\mathrm{\mu}$M)'
+    elif var_str == 'Ca_cyt':
+        colorbar_label = r'Ca$_\mathrm{cyt}$ ($\mathrm{\mu}$M)'
+    else:
+        colorbar_label = ''
+    
+    time_string = 'Time = 0 s'
+    if show_colorbar:
+        fig.subplots_adjust(right=0.8)
+        cbar_ax = fig.add_axes([0.85, 0.2, 0.02, 0.6])
+        cb = fig.colorbar(mappable= mpl.cm.ScalarMappable(norm=var_norm, cmap=var_cmap), cax=cbar_ax)
+        cb.set_label(label=colorbar_label, fontsize=14)
+        file_str += '_colorbar'
+        if show_time:
+            time_text = fig.text(0.40, 0.9, time_string, fontsize=16)
+            file_str += '_time'
+    if (show_time and not show_colorbar):
+        fig.subplots_adjust(top=0.94)
+        time_text = fig.text(0.40, 0.92, time_string, fontsize=16)
+        file_str += '_time'
+    
+    video_length = 30 # seconds
+    fps = 48
+    interval_from_fps = 1000/fps
+    frames_N = video_length * fps
+    sample_rate = int(np.floor(timepoint_N / frames_N))
+    if sample_rate == 0:
+        sample_rate = 1
+        frames_N = timepoint_N
+    # print("frames:" + str(frames_N) + ", timepoints:" + str(timepoint_N) + ", sample_rate:" + str(sample_rate))
+    def animate(i):
+        if show_time:
+            time_text.set_text('Time = ' + str(int(i * sample_rate * store_dt)) + ' s')
+        for hexa in hexes:
+            val = var_dict[hexa][i*sample_rate]
+            hex_patches[hexa].set_facecolor(var_cmap(var_norm(val)))
+        return
+
+    if file_str == 'show':
+        print("animation not currently working")
+        # OPTION 1
+        from matplotlib import rc
+        from IPython.display import HTML
+        anim_jupyter = FuncAnimation(fig, animate, frames=frames_N, interval=interval_from_fps, blit=False)
+        rc('animation', html='html5')
+        HTML(anim_jupyter.to_html5_video())
+        
+        # OPTION 2
+        # anim_jupyter = FuncAnimation(fig, animate, frames=frames_N, interval=interval_from_fps, blit=False)
+        # plt.show()
+        
+        # OPTION 3
+        # from IPython.display import HTML
+        # anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        # anim_mp4.save('hex_anim.mp4', writer='ffmpeg', fps=fps)
+        # HTML("""
+        #     <video alt="test" controls>
+        #         <source src="hex_anim.mp4" type="video/mp4">
+        #     </video>
+        # """)
+    else:
+        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+        anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        
+    plt.close()
