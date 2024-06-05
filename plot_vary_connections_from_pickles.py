@@ -5,12 +5,12 @@ import random
 
 from lib import *
 from functions import *
-from plot import thesis_vary_constant_connections_animation
+from plot import thesis_vary_constant_connections_animation, thesis_vary_constant_connections_stills
 
 ##################################################################################################
 # results folder
 results_dir = "results/vary_connections/"
-results_dir = "results/vary_connections_short/"
+# results_dir = "results/vary_connections_short/"
 
 folder_list = ['connect_frac_0_0', 'connect_frac_0_1', 'connect_frac_0_2', 'connect_frac_0_4', 'connect_frac_0_8', 'connect_frac_1_0']
 # folder_list = ['connect_frac_0_8', 'connect_frac_1_0']
@@ -66,16 +66,19 @@ var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Oranges', 'Blues']
 varied_var_loc_list = [varied_Ca_cyt_val_loc, varied_ip3_val_loc]
 
-var_strings = ['IP3']
-color_strings = ['Blues']
-varied_var_loc_list = [varied_ip3_val_loc]
+# var_strings = ['IP3']
+# color_strings = ['Blues']
+# varied_var_loc_list = [varied_ip3_val_loc]
 
 plot_time_indicies = [0]
 
 start_time = time.time()
 
+selected_time_idx = 1002
+
 for varied_var_loc, var_str, color_str in zip(varied_var_loc_list, var_strings, color_strings):
     thesis_vary_constant_connections_animation(varied_var_loc, varied_connections, store_timepoint_N, store_dt, hex_array, hex_grid_dim, pointy, 8, var_str, color_str, results_dir + var_str + '_vary_connect_anim')
+    thesis_vary_constant_connections_stills(varied_var_loc, varied_connections, selected_time_idx, store_timepoint_N, store_dt, hex_array, hex_grid_dim, pointy, 8, var_str, color_str, results_dir + var_str + '_vary_connect_still')
     
 end_time = time.time()
 print('Time animating', end_time - start_time)

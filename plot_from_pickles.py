@@ -12,7 +12,7 @@ from plot import animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_t
 # results folder
 results_dir = "results/"
 
-save_dir = results_dir + '2024-05-31_1102 D_0_2/'
+save_dir = results_dir + '2024-05-31_0639 D_0_005/'
 
 ##################################################################################################
 # LOAD PICKLES
@@ -37,7 +37,7 @@ try:
     print('"D_IP3" loaded from params.')
 except:
     params = {}
-    params['D_IP3'] = 0.2
+    params['D_IP3'] = 0.005
     D_str = str(params['D_IP3'])
     print('"D_IP3" set manually.')
 
