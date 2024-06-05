@@ -266,8 +266,14 @@ hex_tuples = [hex_to_tuple(hexa) for hexa in hex_array]
 with open(pickle_dir + 'hex_tuples.pickle', 'wb') as handle:
     pickle.dump(hex_tuples, handle)
     
+pickle_params = deepcopy(params)
+pickle_params.pop('V_PLC')
 with open(pickle_dir + 'params.pickle', 'wb') as handle:
-    pickle.dump(params, handle)
+    pickle.dump(pickle_params, handle)
+    
+V_PLC_value_loc_tuple = create_val_loc_tuple_std_layout(params['V_PLC'], hex_array, pointy)
+with open(pickle_dir + 'V_PLC' + '.pickle', 'wb') as handle:
+    pickle.dump(V_PLC_value_loc_tuple, handle)
     
 with open(pickle_dir + 'connect_params.pickle', 'wb') as handle:
     pickle.dump(connection_params, handle)
