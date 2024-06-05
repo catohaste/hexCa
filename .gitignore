@@ -3,6 +3,7 @@ results/
 a_model_in_development/
 demo/
 connections/
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
