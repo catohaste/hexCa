@@ -76,10 +76,10 @@ flat = create_layout_from_dict(flat_layout_dict)
 # hex_y_N = 1
 # hex_x_N = 120
 # hex_y_N = 12
-hex_x_N = 60
-hex_y_N = 6
-# hex_x_N = 50
-# hex_y_N = 30
+# hex_x_N = 60
+# hex_y_N = 6
+hex_x_N = 50
+hex_y_N = 30
 hex_array = []
 
 dimension_suffix_str = '_' + str(hex_x_N) + '_' + str(hex_y_N)
@@ -111,7 +111,7 @@ for x in range(hex_x_N):
 #         hex_array.append(Hex(x,y,-x-y))
 
 ##################################################################################################
-t_endpoint = 600
+t_endpoint = 1200
 
 dt = 0.05
 store_dt = 0.5
@@ -124,13 +124,15 @@ run_timepoint_N = len(run_t)
 store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
-params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
-# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.85, 0, 1, pointy)
-# params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (0.787,1.1), pointy)
+# params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
+# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
+params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (0.9,0.787), pointy)
 # print(params["V_PLC"])
 
+plot_V_PLC(params["V_PLC"], hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'V_PLC' + '_initial', show_time=False)
+
 # set cell-cell communication, 0 => OFF, standard 0.02
-params["D_IP3"] = 0.02
+params["D_IP3"] = 0.08
 
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
@@ -310,14 +312,17 @@ plot_vars = [Ca_cyt_new, ip3_new]
 # link_vars = [Ca_cyt_links, ip3_links]
 plot_var_strings = ['Ca_cyt', 'IP3']
 color_strings = ['Oranges', 'Blues']
+
+plot_var_strings = ['IP3']
+color_strings = ['Blues']
 plot_time_indicies = [int(x/store_dt)for x in [0, 488, 494, 500, 506, 512, 518, 524, 530, 536, 542, 548]]
 
 for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
     animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 5, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True, D_str=str(params['D_IP3']))
     plot_colorbar(var, 5, var_str, color_str, save_dir + var_str + '_colorbar')
-    for plot_time in plot_time_indicies:
-        plot_var_by_color(var, plot_time, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time*store_dt)), show_time=True)
-    
+    # for plot_time in plot_time_indicies:
+    #     plot_var_by_color(var, plot_time, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir+ var_str + '_' + str(int(plot_time*store_dt)), show_time=True)
+
 # plot_vars = [Ca_cyt_new, ip3_new, Ca_stored_new, ip3R_act_new]
 # plot_var_strings = ['Ca_cyt', 'IP3', 'Ca_ER', 'IP3R_active']
 # color_strings = ['Blues', 'Oranges', 'Greens', 'Reds']

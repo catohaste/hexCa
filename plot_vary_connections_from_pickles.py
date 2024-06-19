@@ -9,7 +9,7 @@ from plot import thesis_vary_constant_connections_animation, thesis_vary_constan
 
 ##################################################################################################
 # results folder
-results_dir = "results/vary_connections/"
+results_dir = "results/vary_connections_leak_fixed/"
 # results_dir = "results/vary_connections_short/"
 
 folder_list = ['connect_frac_0_0', 'connect_frac_0_1', 'connect_frac_0_2', 'connect_frac_0_4', 'connect_frac_0_8', 'connect_frac_1_0']
