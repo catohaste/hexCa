@@ -12,13 +12,15 @@ from plot import animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_t
 # results folder
 results_dir = "results/"
 
-save_dir = results_dir + '2024-05-31_0639 D_0_005/'
+save_dir = results_dir + '2024-06-19_1517/'
 
 ##################################################################################################
 # LOAD PICKLES
 
-var_strings = ['Ca_cyt', 'IP3']
-color_strings = ['Oranges', 'Blues']
+# var_strings = ['Ca_cyt', 'IP3']
+# color_strings = ['Oranges', 'Blues']
+var_strings = ['IP3']
+color_strings = ['Blues']
 
 pickle_dir = save_dir + "pickles/"
 
@@ -32,13 +34,13 @@ pointy = create_layout_from_dict(layout_dict)
 
 try:
     with open(pickle_dir + 'params.pickle', 'rb') as handle:
-        params = pickle.load(params, handle)
-    D_str = str(params['D_IP3'])
+        params = pickle.load(handle)
+    anim_param_str = r'$D_\mathrm{IP_3} $ = ' + str(params['D_IP3'])
     print('"D_IP3" loaded from params.')
 except:
     params = {}
-    params['D_IP3'] = 0.005
-    D_str = str(params['D_IP3'])
+    params['D_IP3'] = 0.08
+    anim_param_str = r'$D_\mathrm{IP_3} $ = ' + str(params['D_IP3'])
     print('"D_IP3" set manually.')
 
 hex_array_a, Ca_cyt = unpack_val_loc_tuple_std_layout(Ca_cyt_val_loc, pointy)
@@ -69,7 +71,7 @@ plot_time_indicies = [int(x/store_dt)for x in [0, 488, 494, 500, 506, 512, 518, 
 # plot_time_indicies = [0]
 
 for var, var_str, color_str in zip(variables, var_strings, color_strings):
-    animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 5, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True, D_str=D_str)
+    animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 5, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True, param_str=anim_param_str)
     # animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
     # plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
     # plot_colorbar(var, 5, var_str, color_str, save_dir + var_str + '_colorbar')

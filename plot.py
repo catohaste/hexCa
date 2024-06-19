@@ -135,7 +135,7 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
         # plt.show()
         anim_mp4.save(file_str + '_avg_over_y.mp4', writer='ffmpeg', fps=fps)
     
-def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, var_str, color_str, file_str, show_time=False, show_colorbar=False, D_str=None):
+def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, var_str, color_str, file_str, show_time=False, show_colorbar=False, param_str=None):
     
     mpl.rcParams['font.family'] = 'sans-serif'
     try:
@@ -195,11 +195,10 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
         # if show_time:
         #     time_text = fig.text(0.40, 0.9, time_string, fontsize=16)
         #     file_str += '_time'
-        if show_time and D_str:
-            full_D_str = r'$D_\mathrm{IP_3} $ = ' + D_str
-            D_text = fig.text(0.04, 0.9, full_D_str, fontsize=16)
+        if show_time and param_str:
+            param_text = fig.text(0.04, 0.9, param_str, fontsize=16)
             time_text = fig.text(0.53, 0.9, time_string, fontsize=16)
-            file_str += '_time_D'
+            file_str += '_time_param'
     if (show_time and not show_colorbar):
         fig.subplots_adjust(top=0.94)
         time_text = fig.text(0.40, 0.92, time_string, fontsize=16)
