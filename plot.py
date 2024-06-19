@@ -304,6 +304,56 @@ def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, po
         fig.savefig(save_dir + '.png')
         
     plt.close()
+    
+def plot_V_PLC(var_dict, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir, show_time=False):
+    
+    mpl.rcParams['font.family'] = 'sans-serif'
+    try:
+        mpl.rcParams['font.sans-serif'] = ['Clear Sans']
+    except:
+        print('Could not find font "Clear Sans."')
+        mpl.rcParams['font.sans-serif'] = ['Arial']
+    
+    value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
+    
+    if color_str == 'constant':
+        # get colormap
+        min_val = 0
+        max_val = 1
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap('Greys')
+    else:
+        # get colormap
+        min_val = min(list(var_dict.values()))
+        max_val = max(list(var_dict.values()))
+        var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
+        var_cmap = plt.get_cmap(color_str)
+
+    hex_centers = [hex_to_pixel(pointy_layout, hexa) for hexa in hexes]
+    
+    grid_aspect_ratio = hex_grid_dim[1] / hex_grid_dim[0]
+        
+    fig = plt.figure(figsize=(figsize_x, figsize_x*grid_aspect_ratio))
+    ax = fig.add_subplot(111)
+    
+    pointy_radius = pointy_layout.size[0]
+    hex_patches = [RegularPolygon((center.x, center.y), facecolor=var_cmap(var_norm(val)), numVertices=6, radius=pointy_radius, edgecolor='k') for (val, center) in value_loc_tuples]
+    for patch in hex_patches:
+        ax.add_patch(patch)
+    
+    set_axes_lims_from_hexes(ax, hexes, pointy_layout)
+    
+    ax.set_aspect('equal')
+    fig.patch.set_visible(False)
+    ax.axis('off')
+    fig.tight_layout()
+            
+    if save_dir == 'show':
+        plt.show()
+    else:
+        fig.savefig(save_dir + '.png')
+        
+    plt.close()
 
 def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir):
     
