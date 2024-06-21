@@ -12,7 +12,7 @@ from plot import animate_var_by_color, animate_var_over_x_avg_y, plot_var_over_t
 # results folder
 results_dir = "results/"
 
-save_dir = results_dir + '2024-06-19_1517/'
+save_dir = results_dir + 'vary_D_IP3/2024-05-31_1102 D_0_2/'
 
 ##################################################################################################
 # LOAD PICKLES
@@ -32,16 +32,33 @@ with open(pickle_dir + 'layout_dict.pickle', 'rb') as handle:
     layout_dict = pickle.load(handle)
 pointy = create_layout_from_dict(layout_dict)
 
+anim_param_str = ''
+
 try:
     with open(pickle_dir + 'params.pickle', 'rb') as handle:
         params = pickle.load(handle)
     anim_param_str = r'$D_\mathrm{IP_3} $ = ' + str(params['D_IP3'])
-    print('"D_IP3" loaded from params.')
+    print('"D_IP3" loaded from pickle.')
 except:
     params = {}
-    params['D_IP3'] = 0.08
+    params['D_IP3'] = 0.2
     anim_param_str = r'$D_\mathrm{IP_3} $ = ' + str(params['D_IP3'])
     print('"D_IP3" set manually.')
+    
+# try:
+#     with open(pickle_dir + 'V_PLC.pickle', 'rb') as handle:
+#         V_PLC_val_loc_tuples = pickle.load(handle)
+#     V_PLC_values = [x[0] for x in V_PLC_val_loc_tuples]
+#     V_PLC_constant = all(i == V_PLC_values[0] for i in V_PLC_values)
+#     if V_PLC_constant:
+#         anim_param_str = r'$V_\mathrm{PLC} $ = ' + str(V_PLC_values[0])
+#     else:
+#         print('"V_PLC" not constant.')
+#     print('"V_PLC" loaded from pickle.')
+# except:
+#     manual_V_PLC = 0.787
+#     anim_param_str = r'$V_\mathrm{PLC} $ = ' + str(manual_V_PLC)
+#     print('"V_PLC" set manually.')
 
 hex_array_a, Ca_cyt = unpack_val_loc_tuple_std_layout(Ca_cyt_val_loc, pointy)
 hex_array, ip3 = unpack_val_loc_tuple_std_layout(ip3_val_loc, pointy)
@@ -70,13 +87,15 @@ start_time = time.time()
 plot_time_indicies = [int(x/store_dt)for x in [0, 488, 494, 500, 506, 512, 518, 524, 530, 536, 542, 548]]
 # plot_time_indicies = [0]
 
+V_PLC_vary_min_max = [0.0598, 1.0702]
+
 for var, var_str, color_str in zip(variables, var_strings, color_strings):
     animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 5, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True, param_str=anim_param_str)
     # animate_var_over_x_avg_y(var, store_timepoint_N, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, var_str, save_dir + var_str)
     # plot_var_over_time_fixed_x_avg_y(var, hex_array, pointy, 12, color_str, var_str, save_dir + var_str)
-    # plot_colorbar(var, 5, var_str, color_str, save_dir + var_str + '_colorbar')
+    # plot_colorbar(var, 5, var_str, color_str, save_dir + var_str + '_colorbar', min_max=V_PLC_vary_min_max)
     # for plot_time_idx in plot_time_indicies:
-    #     plot_var_by_color(var, plot_time_idx, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time_idx*store_dt)), show_time=False)
+    #     plot_var_by_color(var, plot_time_idx, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 12, color_str, save_dir + var_str + '_' + str(int(plot_time_idx*store_dt)), show_time=False, min_max=V_PLC_vary_min_max)
     
 end_time = time.time()
 
