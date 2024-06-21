@@ -124,7 +124,7 @@ run_timepoint_N = len(run_t)
 store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
-params["V_PLC"] = allocate_var_dict(hex_array, 1, 1.1)
+params["V_PLC"] = allocate_var_dict(hex_array, 1, 2.15)
 # params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
 # params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (0.9,0.787), pointy)
 # print(params["V_PLC"])
