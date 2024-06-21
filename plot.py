@@ -135,7 +135,7 @@ def animate_var_over_x_avg_y(var_dict, timepoint_N, hexes, hex_grid_dim, pointy_
         # plt.show()
         anim_mp4.save(file_str + '_avg_over_y.mp4', writer='ffmpeg', fps=fps)
     
-def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, var_str, color_str, file_str, show_time=False, show_colorbar=False, param_str=None):
+def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, var_str, color_str, file_str, show_time=False, show_colorbar=False, min_max= None, param_str=None):
     
     mpl.rcParams['font.family'] = 'sans-serif'
     try:
@@ -146,12 +146,12 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
-    if color_str == 'constant':
-        # get colormap
-        min_val = 0
-        max_val = 1
+    if min_max:
+        # normalize colormap according to min_max
+        min_val = min_max[0]
+        max_val = min_max[1]
         var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-        var_cmap = plt.get_cmap('Greys')
+        var_cmap = plt.get_cmap(color_str)
     else:
         # get colormap
         min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
@@ -192,19 +192,18 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
         cb = fig.colorbar(mappable= mpl.cm.ScalarMappable(norm=var_norm, cmap=var_cmap), cax=cbar_ax)
         cb.set_label(label=colorbar_label, fontsize=14)
         file_str += '_colorbar'
-        # if show_time:
-        #     time_text = fig.text(0.40, 0.9, time_string, fontsize=16)
-        #     file_str += '_time'
-        if show_time and param_str:
-            param_text = fig.text(0.04, 0.9, param_str, fontsize=16)
+        if show_time:
             time_text = fig.text(0.53, 0.9, time_string, fontsize=16)
-            file_str += '_time_param'
+            file_str += '_time'
+        if param_str:
+            param_text = fig.text(0.04, 0.9, param_str, fontsize=16)
+            file_str += '_param'
     if (show_time and not show_colorbar):
         fig.subplots_adjust(top=0.94)
         time_text = fig.text(0.40, 0.92, time_string, fontsize=16)
         file_str += '_time'
     
-    ### high quality 
+    ### high quality
     fps = 48
     interval_from_fps = 1000/fps # interval between frames in milliseconds
     sample_rate = 1
@@ -253,7 +252,7 @@ def animate_var_by_color(var_dict, timepoint_N, store_dt, hexes, hex_grid_dim, p
         
     plt.close()
 
-def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir, show_time=False):
+def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir, show_time=False, min_max= None):
     
     mpl.rcParams['font.family'] = 'sans-serif'
     try:
@@ -264,12 +263,12 @@ def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, po
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
-    if color_str == 'constant':
-        # get colormap
-        min_val = 0
-        max_val = 1
+    if min_max:
+        # normalize colormap according to min_max
+        min_val = min_max[0]
+        max_val = min_max[1]
         var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-        var_cmap = plt.get_cmap('Greys')
+        var_cmap = plt.get_cmap(color_str)
     else:
         # get colormap
         min_val = min([min(val_array) for (val_array, center) in value_loc_tuples])
@@ -358,7 +357,7 @@ def plot_V_PLC(var_dict, hexes, hex_grid_dim, pointy_layout, figsize_x, color_st
         
     plt.close()
 
-def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir):
+def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir, min_max= None):
     
     mpl.rcParams['font.family'] = 'sans-serif'
     try:
@@ -374,14 +373,14 @@ def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir):
     minima = np.ndarray((hexesN,))
     maxima = np.ndarray((hexesN,))
 
-    if color_str == 'constant':
-        # get colormap
-        min_val = 0
-        max_val = 1
+    if min_max:
+        # normalize colormap according to min_max
+        min_val = min_max[0]
+        max_val = min_max[1]
         var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-        var_cmap = plt.get_cmap('Greys')
+        var_cmap = plt.get_cmap(color_str)
     else:
-        # get colormap
+        # otherwise normalize colormap from min_max of var_dict
         for hexa_idx, hexa in enumerate(var_dict):
             minima[hexa_idx] = min(var_dict[hexa])
             maxima[hexa_idx] = max(var_dict[hexa])
@@ -389,6 +388,10 @@ def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir):
         max_val = max(maxima)
         var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
         var_cmap = plt.get_cmap(color_str)
+        
+        print("Colorbar")
+        print("Min", min_val)
+        print("Max", max_val)
         
     if var_str == 'IP3':
         colorbar_label = r'IP$_3$ ($\mathrm{\mu}$M)'
