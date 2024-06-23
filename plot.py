@@ -307,7 +307,7 @@ def plot_var_by_color(var_dict, timepoint_idx, store_dt, hexes, hex_grid_dim, po
         
     plt.close()
     
-def plot_V_PLC(var_dict, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir, show_time=False):
+def plot_V_PLC(var_dict, hexes, hex_grid_dim, pointy_layout, figsize_x, color_str, save_dir, show_time=False, min_max= None):
     
     mpl.rcParams['font.family'] = 'sans-serif'
     try:
@@ -318,16 +318,19 @@ def plot_V_PLC(var_dict, hexes, hex_grid_dim, pointy_layout, figsize_x, color_st
     
     value_loc_tuples = create_val_loc_tuple_std_layout(var_dict, hexes, pointy_layout)
     
-    if color_str == 'constant':
-        # get colormap
-        min_val = 0
-        max_val = 1
+    if min_max:
+        # normalize colormap according to min_max
+        min_val = min_max[0]
+        max_val = min_max[1]
         var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
-        var_cmap = plt.get_cmap('Greys')
+        var_cmap = plt.get_cmap(color_str)
     else:
-        # get colormap
-        min_val = min(list(var_dict.values()))
-        max_val = max(list(var_dict.values()))
+        # otherwise normalize colormap from min_max of var_dict
+        for hexa_idx, hexa in enumerate(var_dict):
+            minima[hexa_idx] = min(var_dict[hexa])
+            maxima[hexa_idx] = max(var_dict[hexa])
+        min_val = min(minima)
+        max_val = max(maxima)
         var_norm = mpl.colors.Normalize(vmin=min_val, vmax=max_val)
         var_cmap = plt.get_cmap(color_str)
 
@@ -369,7 +372,10 @@ def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir, min_max= No
     hexes_list = list(var_dict.keys())
     hexesN = len(hexes_list)
     example_hexa = hexes_list[0]
-    timepointN = len(var_dict[example_hexa])
+    try:
+        timepointN = len(var_dict[example_hexa])
+    except:
+        timepointN = 1
     minima = np.ndarray((hexesN,))
     maxima = np.ndarray((hexesN,))
 
@@ -392,11 +398,14 @@ def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir, min_max= No
         print("Colorbar")
         print("Min", min_val)
         print("Max", max_val)
+    range_val = max_val - min_val
         
     if var_str == 'IP3':
         colorbar_label = r'IP$_3$ ($\mathrm{\mu}$M)'
     elif var_str == 'Ca_cyt':
         colorbar_label = r'Ca$_\mathrm{cyt}$ ($\mathrm{\mu}$M)'
+    elif var_str == 'V_PLC':
+        colorbar_label = r'V$_\mathrm{PLC}$ ($\mathrm{\mu}$M)'
     else:
         colorbar_label = ''
         
@@ -407,10 +416,10 @@ def plot_colorbar(var_dict, figsize_x, var_str, color_str, save_dir, min_max= No
     cb_ax = cb_fig.add_axes([0.05, 0.05, 0.9, 0.9])
     
     dummy_plot = dummy_ax.scatter(range(timepointN), range(timepointN), c=var_dict[example_hexa], cmap=var_cmap ,s=10, vmin=min_val, vmax=max_val)
-    cb_ticks = [round((min_val + max_val) * 0.2 ,2), round((min_val + max_val) * 0.5 ,2), round((min_val + max_val) * 0.8 ,2)]
+    cb_ticks = [round(min_val + range_val*0.2 ,2), round(min_val + range_val*0.5 ,2), round(min_val + range_val*0.8,2)]
     cb_ticklabels = [str(x) for x in cb_ticks]
     cb = cb_fig.colorbar(dummy_plot, cax=cb_ax, orientation='horizontal', ticks=cb_ticks)
-    cb.set_label(label=r'IP$_3$ ($\mathrm{\mu}$M)', fontsize=8)
+    cb.set_label(label=colorbar_label, fontsize=8)
     cb.set_ticklabels(cb_ticklabels, fontsize=6)
     
     if save_dir == 'show':

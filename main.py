@@ -78,8 +78,8 @@ flat = create_layout_from_dict(flat_layout_dict)
 # hex_y_N = 12
 # hex_x_N = 60
 # hex_y_N = 6
-hex_x_N = 50
-hex_y_N = 30
+hex_x_N = 51
+hex_y_N = 1
 hex_array = []
 
 dimension_suffix_str = '_' + str(hex_x_N) + '_' + str(hex_y_N)
@@ -124,15 +124,18 @@ run_timepoint_N = len(run_t)
 store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
-params["V_PLC"] = allocate_var_dict(hex_array, 1, 2.15)
-# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
-# params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (0.9,0.787), pointy)
+params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
+params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
+# params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (1.1,0.787), pointy)
 # print(params["V_PLC"])
 
-plot_V_PLC(params["V_PLC"], hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'V_PLC' + '_initial', show_time=False)
+V_PLC_var_str = 'V_PLC'
+V_PLC_colorbar_min_max = [0.787,0.9]
+plot_V_PLC(params["V_PLC"], hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'V_PLC' + '_initial', show_time=False, min_max=V_PLC_colorbar_min_max)
+plot_colorbar(params["V_PLC"], 5, V_PLC_var_str, 'Reds', save_dir + V_PLC_var_str + '_colorbar', min_max=V_PLC_colorbar_min_max)
 
 # set cell-cell communication, 0 => OFF, standard 0.02
-params["D_IP3"] = 0.08
+params["D_IP3"] = 0.02
 
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
@@ -323,6 +326,10 @@ V_PLC_values = list(params["V_PLC"].values())
 V_PLC_constant = all(i == V_PLC_values[0] for i in V_PLC_values)
 if V_PLC_constant:
     anim_param_str = r'$V_\mathrm{PLC} $ = ' + str(V_PLC_values[0])
+else:
+    min_V_PLC = min(V_PLC_values)
+    max_V_PLC = max(V_PLC_values)
+    anim_param_str = r'$V_\mathrm{PLC} \in $ [' + str(min_V_PLC) + ', ' + str(max_V_PLC) + ']'
 
 for var, var_str, color_str in zip(plot_vars, plot_var_strings, color_strings):
     animate_var_by_color(var, store_timepoint_N, store_dt, hex_array, (hex_x_N,hex_y_N), pointy, 5, var_str, color_str, save_dir + var_str, show_time=True, show_colorbar=True, param_str=anim_param_str)
