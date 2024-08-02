@@ -94,13 +94,13 @@ def politi_reduced_connectivity(variables, run_t, store_t, hex_array, initial_co
                 incoming = 0
                 
                 # option 1, the logical, sensible option
-                # outgoing = 0
+                outgoing = 0
                 
                 # option 2
                 # well, I fucked up
                 # here if a cell has no connections, it still loses IP3 to its 'neighbours' without gaining anything in return
                 # ironically, this actually seems to work pretty well
-                outgoing = old_ip3[hexa]
+                # outgoing = old_ip3[hexa]
             else:
                 ip3_neighborhood_sum = 0
                 ip3_neighbor_number = len(current_edges)                
