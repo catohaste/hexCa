@@ -78,8 +78,10 @@ flat = create_layout_from_dict(flat_layout_dict)
 # hex_y_N = 12
 # hex_x_N = 60
 # hex_y_N = 6
-hex_x_N = 51
-hex_y_N = 1
+hex_x_N = 50
+hex_y_N = 30
+# hex_x_N = 51
+# hex_y_N = 1
 hex_array = []
 
 dimension_suffix_str = '_' + str(hex_x_N) + '_' + str(hex_y_N)
@@ -125,17 +127,17 @@ store_timepoint_N = len(store_t)
 
 # initialize V_PLC, different value in each hex
 params["V_PLC"] = allocate_var_dict(hex_array, 1, 0.787)
-params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
+# params["V_PLC"] = initialize_column_of_hexes_to_value_2(params["V_PLC"], hex_array, 0.9, 0, 1, pointy)
 # params["V_PLC"] = initialize_var_dict_to_x_gradient(params["V_PLC"], hex_array, (1.1,0.787), pointy)
 # print(params["V_PLC"])
 
 V_PLC_var_str = 'V_PLC'
 V_PLC_colorbar_min_max = [0.787,0.9]
-plot_V_PLC(params["V_PLC"], hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'V_PLC' + '_initial', show_time=False, min_max=V_PLC_colorbar_min_max)
-plot_colorbar(params["V_PLC"], 5, V_PLC_var_str, 'Reds', save_dir + V_PLC_var_str + '_colorbar', min_max=V_PLC_colorbar_min_max)
+# plot_V_PLC(params["V_PLC"], hex_array, (hex_x_N,hex_y_N), pointy, 12, 'Reds', save_dir + 'V_PLC' + '_initial', show_time=False, min_max=V_PLC_colorbar_min_max)
+# plot_colorbar(params["V_PLC"], 5, V_PLC_var_str, 'Reds', save_dir + V_PLC_var_str + '_colorbar', min_max=V_PLC_colorbar_min_max)
 
 # set cell-cell communication, 0 => OFF, standard 0.02
-params["D_IP3"] = 0.02
+params["D_IP3"] = 0.08
 
 # allocation initial conditions for variables
 Ca_cyt_0 = 2
