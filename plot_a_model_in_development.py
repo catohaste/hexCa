@@ -6,6 +6,7 @@ from matplotlib.patches import RegularPolygon
 from shapely.geometry import Polygon
 from matplotlib.animation import FuncAnimation
 from copy import deepcopy
+import os
 
 from lib import *
 from functions import *
@@ -148,9 +149,15 @@ def animate_var_flag(run_selection, flag_var_dict, connect_var, timepoint_N, fla
     set_axes_lims_from_hexes(ax, all_hexes, pointy_layout)
     
     ax.set_aspect('equal')
-    fig.patch.set_visible(False)
+    fig.patch.set_visible(True)
     ax.axis('off')
     plt.tight_layout()
+
+    # make the background transparent
+    fig.patch.set_alpha(0)
+    ax.patch.set_alpha(0)
+    fig.patch.set_facecolor((0, 0, 0, 0))
+    ax.set_facecolor((0, 0, 0, 0))
     
     video_length = 30 # seconds
     fps = 48
@@ -237,8 +244,51 @@ def animate_var_flag(run_selection, flag_var_dict, connect_var, timepoint_N, fla
         #     </video>
         # """)
     else:
-        anim_mp4 = FuncAnimation(fig, animate, frames=frames_N, blit=False)
-        anim_mp4.save(file_str + '.mp4', writer='ffmpeg', fps=fps)
+        anim_video = FuncAnimation(fig, animate, frames=frames_N, blit=False)
+
+        # MP4/H.264 does not support alpha; use .webm for transparent output.
+        output_path = file_str if os.path.splitext(file_str)[1] else file_str + '.gif'
+        ext = os.path.splitext(output_path)[1].lower()
+
+        # Avoid ffmpeg/pillow write failures when target file already exists.
+        if os.path.exists(output_path):
+            try:
+                os.remove(output_path)
+            except PermissionError as exc:
+                raise PermissionError(
+                    f"Cannot overwrite '{output_path}' because it is open in another program. Close it and run again."
+                ) from exc
+
+        if ext == '.webm':
+            writer = mpl.animation.FFMpegWriter(
+                fps=fps,
+                codec='libvpx-vp9',
+                extra_args=['-pix_fmt', 'yuva420p', '-auto-alt-ref', '0']
+            )
+            anim_video.save(
+                output_path,
+                writer=writer,
+                savefig_kwargs={'transparent': True, 'facecolor': 'none'}
+            )
+        elif ext == '.gif':
+            # PowerPoint generally handles GIF transparency better than video alpha.
+            gif_writer = mpl.animation.PillowWriter(fps=fps)
+            anim_video.save(
+                output_path,
+                writer=gif_writer,
+                savefig_kwargs={'transparent': True, 'facecolor': 'none'}
+            )
+        else:
+            if ext == '.mp4':
+                print("Note: MP4 export does not preserve alpha transparency. Use a .webm filename for transparent video.")
+            else:
+                print("Note: For PowerPoint, try .gif output for transparent background.")
+            anim_video.save(
+                output_path,
+                writer='ffmpeg',
+                fps=fps,
+                savefig_kwargs={'transparent': True, 'facecolor': 'none'}
+            )
 
 def plot_var_flag(run_selection, flag_var_dict, connect_var, timepoint_idx, flag_hexes, animation_type, stripe_dim, pointy_layout, figsize_x, save_dir):
     
@@ -349,7 +399,7 @@ def plot_var_flag(run_selection, flag_var_dict, connect_var, timepoint_idx, flag
     if save_dir == 'show':
         plt.show()
     else:
-        plt.savefig(save_dir + '.png')
+        plt.savefig(save_dir + '.png', transparent=True, facecolor='none')
     
 def plot_hexes_flag(hexes, hex_grid_dim, pointy_layout, figsize_x, save_dir):
     
