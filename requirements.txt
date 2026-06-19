@@ -1,0 +1,5 @@
+shapely
+pandas
+matplotlib
+networkx
+ipython

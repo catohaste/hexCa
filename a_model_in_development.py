@@ -47,8 +47,8 @@ pointy = create_layout_from_dict(layout_dict)
 hex_x_N = 65
 hex_y_N = 5
 
-# run_selection = ['black', 'brown', 'red', 'orange', 'yellow', 'green', 'blue', 'purple']
-run_selection = ['green']
+run_selection = ['black', 'brown', 'red', 'orange', 'yellow', 'green', 'blue', 'purple']
+# run_selection = ['red']
 
 stripes = {
     'black': [],
